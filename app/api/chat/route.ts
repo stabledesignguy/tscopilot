@@ -10,10 +10,15 @@ import { retrieveRelevantChunks } from '@/lib/rag/retriever'
 import type { LLMProvider, LLMMessage } from '@/types'
 
 export const dynamic = 'force-dynamic'
+export const fetchCache = 'force-no-store'
+export const revalidate = 0
 export const maxDuration = 60
 
 export async function GET() {
-  return NextResponse.json({ status: 'Chat API is running', method: 'GET' })
+  return NextResponse.json(
+    { status: 'Chat API is running', method: 'GET' },
+    { headers: { 'Cache-Control': 'no-store, max-age=0' } }
+  )
 }
 
 export async function POST(request: NextRequest) {
@@ -139,6 +144,7 @@ export async function POST(request: NextRequest) {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
         'Transfer-Encoding': 'chunked',
+        'Cache-Control': 'no-store, max-age=0',
         'X-Conversation-Id': activeConversationId,
         'X-LLM-Provider': provider,
       },
@@ -147,7 +153,7 @@ export async function POST(request: NextRequest) {
     console.error('Chat error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
-      { status: 500 }
+      { status: 500, headers: { 'Cache-Control': 'no-store, max-age=0' } }
     )
   }
 }
