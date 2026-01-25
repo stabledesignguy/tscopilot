@@ -2,7 +2,6 @@
 
 import { useState, useRef, type ChangeEvent } from 'react'
 import { Upload, File, X, Loader2, CheckCircle, AlertCircle } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
 import { formatFileSize } from '@/lib/utils'
 
 interface DocumentUploaderProps {
@@ -25,6 +24,7 @@ const ALLOWED_TYPES = [
 ]
 
 const ALLOWED_EXTENSIONS = ['.pdf', '.docx', '.txt', '.md']
+const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
 
 export function DocumentUploader({
   productId,
@@ -41,38 +41,95 @@ export function DocumentUploader({
 
     Array.from(selectedFiles).forEach((file) => {
       const ext = '.' + file.name.split('.').pop()?.toLowerCase()
-      const isValid =
+      const isValidType =
         ALLOWED_TYPES.includes(file.type) || ALLOWED_EXTENSIONS.includes(ext)
+      const isValidSize = file.size <= MAX_FILE_SIZE
 
-      if (isValid) {
+      if (isValidType && isValidSize) {
         validFiles.push({
           file,
           progress: 0,
           status: 'uploading',
+        })
+      } else if (!isValidSize) {
+        validFiles.push({
+          file,
+          progress: 0,
+          status: 'error',
+          error: 'File too large (max 50MB)',
         })
       }
     })
 
     if (validFiles.length > 0) {
       setFiles((prev) => [...prev, ...validFiles])
-      validFiles.forEach((f) => uploadFile(f.file))
+      validFiles
+        .filter((f) => f.status === 'uploading')
+        .forEach((f) => uploadFileDirect(f.file))
     }
   }
 
-  const uploadFile = async (file: File) => {
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('productId', productId)
-
+  const uploadFileDirect = async (file: File) => {
     try {
-      const response = await fetch('/api/documents', {
+      // Step 1: Get signed upload URL from our API
+      const urlResponse = await fetch('/api/documents/upload-url', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filename: file.name,
+          productId,
+          contentType: file.type,
+        }),
       })
 
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Upload failed')
+      if (!urlResponse.ok) {
+        const data = await urlResponse.json()
+        throw new Error(data.error || 'Failed to get upload URL')
+      }
+
+      const { signedUrl, path, token } = await urlResponse.json()
+
+      // Step 2: Upload directly to Supabase Storage
+      setFiles((prev) =>
+        prev.map((f) =>
+          f.file === file ? { ...f, progress: 30 } : f
+        )
+      )
+
+      const uploadResponse = await fetch(signedUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': file.type,
+        },
+        body: file,
+      })
+
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload file to storage')
+      }
+
+      setFiles((prev) =>
+        prev.map((f) =>
+          f.file === file ? { ...f, progress: 70 } : f
+        )
+      )
+
+      // Step 3: Register the document in our database
+      const registerResponse = await fetch('/api/documents/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filename: file.name,
+          productId,
+          filePath: path,
+          fileSize: file.size,
+          mimeType: file.type,
+        }),
+      })
+
+      if (!registerResponse.ok) {
+        const data = await registerResponse.json()
+        throw new Error(data.error || 'Failed to register document')
       }
 
       setFiles((prev) =>
@@ -149,7 +206,7 @@ export function DocumentUploader({
           Drag and drop files here, or click to browse
         </p>
         <p className="text-xs text-slate-400">
-          Supported: PDF, DOCX, TXT, Markdown
+          Supported: PDF, DOCX, TXT, Markdown (max 50MB)
         </p>
       </div>
 
@@ -166,9 +223,24 @@ export function DocumentUploader({
                 <p className="text-sm font-medium text-slate-700 truncate">
                   {item.file.name}
                 </p>
-                <p className="text-xs text-slate-400">
-                  {formatFileSize(item.file.size)}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-xs text-slate-400">
+                    {formatFileSize(item.file.size)}
+                  </p>
+                  {item.status === 'uploading' && item.progress > 0 && (
+                    <p className="text-xs text-primary-500">
+                      {item.progress}%
+                    </p>
+                  )}
+                </div>
+                {item.status === 'uploading' && (
+                  <div className="mt-1 h-1 bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary-500 transition-all duration-300"
+                      style={{ width: `${item.progress}%` }}
+                    />
+                  </div>
+                )}
               </div>
               {item.status === 'uploading' && (
                 <Loader2 className="w-5 h-5 text-primary-500 animate-spin" />
@@ -178,6 +250,7 @@ export function DocumentUploader({
               )}
               {item.status === 'error' && (
                 <div className="flex items-center gap-2">
+                  <span className="text-xs text-red-500">{item.error}</span>
                   <AlertCircle className="w-5 h-5 text-red-500" />
                   <button
                     onClick={() => removeFile(item.file)}
