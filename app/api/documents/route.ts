@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 
+// Increase body size limit to 50MB for file uploads
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+}
+
+export const maxDuration = 60 // seconds
+
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
