@@ -33,8 +33,8 @@ export async function POST(request: NextRequest) {
     // Get or create conversation
     let activeConversationId = conversationId
     if (!activeConversationId) {
-      const { data: newConversation, error: convError } = await supabase
-        .from('conversations')
+      const { data: newConversation, error: convError } = await (supabase
+        .from('conversations') as any)
         .insert({
           user_id: user.id,
           product_id: productId,
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Save user message
-    const { error: msgError } = await supabase.from('messages').insert({
+    const { error: msgError } = await (supabase.from('messages') as any).insert({
       conversation_id: activeConversationId,
       role: 'user',
       content: message,
@@ -62,15 +62,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Get product info
-    const { data: product } = await supabase
-      .from('products')
+    const { data: product } = await (supabase
+      .from('products') as any)
       .select('name')
       .eq('id', productId)
       .single()
 
     // Get conversation history
-    const { data: history } = await supabase
-      .from('messages')
+    const { data: history } = await (supabase
+      .from('messages') as any)
       .select('role, content')
       .eq('conversation_id', activeConversationId)
       .order('created_at', { ascending: true })
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
       },
       async flush() {
         // Save assistant message after streaming completes
-        await supabase.from('messages').insert({
+        await (supabase.from('messages') as any).insert({
           conversation_id: activeConversationId,
           role: 'assistant',
           content: fullResponse,
@@ -119,8 +119,8 @@ export async function POST(request: NextRequest) {
         })
 
         // Update conversation timestamp
-        await supabase
-          .from('conversations')
+        await (supabase
+          .from('conversations') as any)
           .update({ updated_at: new Date().toISOString() })
           .eq('id', activeConversationId)
       },
