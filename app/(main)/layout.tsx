@@ -31,7 +31,7 @@ export default async function MainLayout({
     .eq('id', user.id)
     .single()
 
-  const isAdmin = profile?.role === 'admin'
+  const isAdmin = (profile as { role: string } | null)?.role === 'admin'
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
