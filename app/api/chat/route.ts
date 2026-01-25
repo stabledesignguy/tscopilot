@@ -9,6 +9,13 @@ import {
 import { retrieveRelevantChunks } from '@/lib/rag/retriever'
 import type { LLMProvider, LLMMessage } from '@/types'
 
+export const dynamic = 'force-dynamic'
+export const maxDuration = 60
+
+export async function GET() {
+  return NextResponse.json({ status: 'Chat API is running', method: 'GET' })
+}
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
