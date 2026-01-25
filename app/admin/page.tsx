@@ -41,7 +41,7 @@ export default async function AdminDashboard() {
     .from('documents')
     .select('*, products(name)')
     .order('created_at', { ascending: false })
-    .limit(5)
+    .limit(5) as { data: Array<{ id: string; filename: string; processing_status: string; products: { name: string } | null }> | null }
 
   return (
     <div className="p-8">
