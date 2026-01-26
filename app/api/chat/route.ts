@@ -130,10 +130,16 @@ export async function POST(request: NextRequest) {
     // Retrieve relevant document chunks for RAG
     let systemPrompt = defaultSystemPrompt
     try {
+      console.log('RAG: Retrieving chunks for productId:', productId, 'query:', message.slice(0, 50))
       const chunks = await retrieveRelevantChunks(message, productId, 5)
+      console.log('RAG: Retrieved', chunks.length, 'chunks')
       if (chunks.length > 0) {
+        console.log('RAG: Top chunk score:', chunks[0]?.score)
         const context = chunks.map((c) => c.chunk.content).join('\n\n---\n\n')
         systemPrompt = buildRAGPrompt(context, product?.name || 'this product')
+        console.log('RAG: Using RAG prompt with context length:', context.length)
+      } else {
+        console.log('RAG: No chunks found, using default prompt')
       }
     } catch (error) {
       console.error('RAG retrieval error:', error)

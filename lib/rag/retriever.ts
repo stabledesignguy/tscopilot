@@ -6,7 +6,7 @@ export async function retrieveRelevantChunks(
   query: string,
   productId: string,
   limit: number = 5,
-  threshold: number = 0.7
+  threshold: number = 0.3
 ): Promise<ChunkWithScore[]> {
   const supabase = await createServiceClient()
 
@@ -24,9 +24,12 @@ export async function retrieveRelevantChunks(
 
   if (error) {
     console.error('Vector search error:', error)
+    console.log('Falling back to text search')
     // Fallback to basic text search if vector search fails
     return fallbackTextSearch(query, productId, limit)
   }
+
+  console.log('Vector search returned', data?.length || 0, 'results')
 
   return (data || []).map((item: any) => ({
     chunk: {
