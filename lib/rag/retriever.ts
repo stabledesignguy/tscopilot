@@ -51,9 +51,10 @@ export async function retrieveRelevantChunks(
   console.log('Vector search: filtering by product_id:', productId)
 
   // Format embedding as a string for PostgreSQL vector type
-  const embeddingString = `[${queryEmbedding.join(',')}]`
+  // Use 9 decimal places to match PostgreSQL's vector::text format
+  const embeddingString = `[${queryEmbedding.map(v => v.toFixed(9)).join(',')}]`
   console.log('DEBUG - Embedding string length:', embeddingString.length)
-  console.log('DEBUG - First 5 values:', queryEmbedding.slice(0, 5))
+  console.log('DEBUG - First 5 formatted values:', queryEmbedding.slice(0, 5).map(v => v.toFixed(9)))
 
   const { data, error } = await supabase.rpc('match_documents', {
     query_embedding: embeddingString,
