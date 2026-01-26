@@ -9,15 +9,34 @@ import {
 import { retrieveRelevantChunks } from '@/lib/rag/retriever'
 import type { LLMProvider, LLMMessage } from '@/types'
 
+// Force Node.js runtime (not Edge)
+export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 export const fetchCache = 'force-no-store'
 export const revalidate = 0
 export const maxDuration = 60
 
+// Handle OPTIONS for CORS preflight
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  })
+}
+
 export async function GET() {
   return NextResponse.json(
     { status: 'Chat API is running', method: 'GET' },
-    { headers: { 'Cache-Control': 'no-store, max-age=0' } }
+    {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      }
+    }
   )
 }
 
