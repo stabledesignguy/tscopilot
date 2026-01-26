@@ -2,17 +2,11 @@
 
 import { useEffect, useRef } from 'react'
 import { Bot, User } from 'lucide-react'
-import type { Message, LLMProvider } from '@/types'
+import type { Message } from '@/types'
 
 interface MessageListProps {
   messages: Message[]
   isLoading?: boolean
-}
-
-const llmLabels: Record<LLMProvider, string> = {
-  claude: 'Claude',
-  openai: 'ChatGPT',
-  gemini: 'Gemini',
 }
 
 export function MessageList({ messages, isLoading }: MessageListProps) {
@@ -47,11 +41,6 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
               <p className="whitespace-pre-wrap text-sm leading-relaxed">
                 {message.content}
               </p>
-              {message.role === 'assistant' && message.llm_used && (
-                <p className="mt-2 text-xs opacity-60">
-                  Powered by {llmLabels[message.llm_used]}
-                </p>
-              )}
             </div>
             {message.role === 'user' && (
               <div className="flex-shrink-0 w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center">
