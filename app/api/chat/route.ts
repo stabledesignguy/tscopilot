@@ -68,6 +68,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { message, conversationId, productId, llmProvider } = body
 
+    console.log('=== CHAT REQUEST START ===')
+    console.log('Received productId from request:', productId)
+    console.log('Received conversationId from request:', conversationId)
+    console.log('Message:', message?.slice(0, 50))
+
     if (!message || !productId) {
       return NextResponse.json(
         { error: 'Message and product ID are required' },

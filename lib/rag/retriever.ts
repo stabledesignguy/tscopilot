@@ -36,7 +36,15 @@ export async function retrieveRelevantChunks(
   console.log(`DEBUG - Sample chunk:`, chunkCheck?.[0] || 'none found')
 
   // Generate embedding for the query
-  const queryEmbedding = await generateEmbeddings(query)
+  console.log('DEBUG - Generating query embedding for:', query.slice(0, 50))
+  let queryEmbedding: number[]
+  try {
+    queryEmbedding = await generateEmbeddings(query)
+    console.log('DEBUG - Query embedding generated, length:', queryEmbedding.length)
+  } catch (embeddingError) {
+    console.error('DEBUG - EMBEDDING GENERATION FAILED:', embeddingError)
+    throw embeddingError
+  }
 
   // Use pgvector similarity search
   // This requires the match_documents function to be created in Supabase
