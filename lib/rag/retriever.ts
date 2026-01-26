@@ -71,6 +71,12 @@ export async function retrieveRelevantChunks(
 
   console.log('Vector search returned', data?.length || 0, 'results for product:', productId)
 
+  // Also fallback if vector search returns no results
+  if (!data || data.length === 0) {
+    console.log('Vector search returned no results, falling back to text search for product:', productId)
+    return fallbackTextSearch(query, productId, limit)
+  }
+
   // Debug: Log the actual chunk details to verify product filtering
   if (data && data.length > 0) {
     console.log('DEBUG - Returned chunks:')
