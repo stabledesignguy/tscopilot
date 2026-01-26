@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Pencil, Trash2, Box, Loader2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, Box, Loader2, FolderTree } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { ProductForm } from '@/components/admin/ProductForm'
@@ -33,6 +33,7 @@ export default function ProductsPage() {
     name: string
     description: string
     image_url: string
+    group_id: string | null
   }) => {
     const response = await fetch('/api/products', {
       method: 'POST',
@@ -53,6 +54,7 @@ export default function ProductsPage() {
     name: string
     description: string
     image_url: string
+    group_id: string | null
   }) => {
     if (!editingProduct) return
 
@@ -149,6 +151,14 @@ export default function ProductsPage() {
                     <h3 className="font-medium text-slate-900 truncate">
                       {product.name}
                     </h3>
+                    {(product as any).group && (
+                      <div className="flex items-center gap-1 mt-1">
+                        <FolderTree className="w-3 h-3 text-primary-500" />
+                        <span className="text-xs text-primary-600">
+                          {(product as any).group.name}
+                        </span>
+                      </div>
+                    )}
                     {product.description && (
                       <p className="text-sm text-slate-500 line-clamp-2 mt-1">
                         {product.description}

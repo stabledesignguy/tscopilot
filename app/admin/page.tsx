@@ -1,13 +1,14 @@
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader } from '@/components/ui/Card'
-import { Package, FileText, MessageSquare, Users } from 'lucide-react'
+import { Package, FileText, MessageSquare, FolderTree } from 'lucide-react'
 
 export default async function AdminDashboard() {
   const supabase = await createClient()
 
   // Fetch statistics
-  const [productsResult, documentsResult, conversationsResult] =
+  const [groupsResult, productsResult, documentsResult, conversationsResult] =
     await Promise.all([
+      (supabase as any).from('groups').select('id', { count: 'exact', head: true }),
       supabase.from('products').select('id', { count: 'exact', head: true }),
       supabase.from('documents').select('id', { count: 'exact', head: true }),
       supabase
@@ -16,6 +17,12 @@ export default async function AdminDashboard() {
     ])
 
   const stats = [
+    {
+      label: 'Groups',
+      value: groupsResult.count || 0,
+      icon: FolderTree,
+      color: 'bg-indigo-500',
+    },
     {
       label: 'Products',
       value: productsResult.count || 0,
@@ -51,7 +58,7 @@ export default async function AdminDashboard() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {stats.map((stat) => (
           <Card key={stat.label}>
             <CardContent className="flex items-center gap-4 py-6">

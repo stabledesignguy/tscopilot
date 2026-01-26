@@ -5,16 +5,23 @@ export async function GET() {
   try {
     const supabase = await createClient()
 
-    const { data: products, error } = await (supabase
-      .from('products') as any)
-      .select('*, group:groups(id, name)')
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { data: groups, error } = await (supabase
+      .from('groups') as any)
+      .select('*, products:products(id, name)')
       .order('name', { ascending: true })
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json({ products })
+    return NextResponse.json({ groups })
   } catch (error) {
     return NextResponse.json(
       { error: 'Internal server error' },
@@ -27,7 +34,6 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
 
-    // Check if user is admin
     const {
       data: { user },
     } = await supabase.auth.getUser()
@@ -35,8 +41,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data: profile } = await supabase
-      .from('profiles')
+    // Check if user is admin
+    const { data: profile } = await (supabase
+      .from('profiles') as any)
       .select('role')
       .eq('id', user.id)
       .single()
@@ -46,26 +53,26 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, description, image_url, group_id } = body
+    const { name, description } = body
 
     if (!name) {
       return NextResponse.json(
-        { error: 'Product name is required' },
+        { error: 'Group name is required' },
         { status: 400 }
       )
     }
 
-    const { data: product, error } = await (supabase
-      .from('products') as any)
-      .insert({ name, description, image_url, group_id: group_id || null })
-      .select('*, group:groups(id, name)')
+    const { data: group, error } = await (supabase
+      .from('groups') as any)
+      .insert({ name, description })
+      .select()
       .single()
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json({ product }, { status: 201 })
+    return NextResponse.json({ group }, { status: 201 })
   } catch (error) {
     return NextResponse.json(
       { error: 'Internal server error' },
@@ -74,7 +81,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function PATCH(request: NextRequest) {
+export async function PUT(request: NextRequest) {
   try {
     const supabase = await createClient()
 
@@ -85,8 +92,9 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data: profile } = await supabase
-      .from('profiles')
+    // Check if user is admin
+    const { data: profile } = await (supabase
+      .from('profiles') as any)
       .select('role')
       .eq('id', user.id)
       .single()
@@ -95,37 +103,28 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const { searchParams } = new URL(request.url)
-    const id = searchParams.get('id')
+    const body = await request.json()
+    const { id, name, description } = body
 
-    if (!id) {
+    if (!id || !name) {
       return NextResponse.json(
-        { error: 'Product ID is required' },
+        { error: 'Group ID and name are required' },
         { status: 400 }
       )
     }
 
-    const body = await request.json()
-    const { name, description, image_url, group_id } = body
-
-    const { data: product, error } = await (supabase
-      .from('products') as any)
-      .update({
-        name,
-        description,
-        image_url,
-        group_id: group_id === undefined ? undefined : (group_id || null),
-        updated_at: new Date().toISOString(),
-      })
+    const { data: group, error } = await (supabase
+      .from('groups') as any)
+      .update({ name, description, updated_at: new Date().toISOString() })
       .eq('id', id)
-      .select('*, group:groups(id, name)')
+      .select()
       .single()
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json({ product })
+    return NextResponse.json({ group })
   } catch (error) {
     return NextResponse.json(
       { error: 'Internal server error' },
@@ -145,8 +144,9 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data: profile } = await supabase
-      .from('profiles')
+    // Check if user is admin
+    const { data: profile } = await (supabase
+      .from('profiles') as any)
       .select('role')
       .eq('id', user.id)
       .single()
@@ -160,39 +160,15 @@ export async function DELETE(request: NextRequest) {
 
     if (!id) {
       return NextResponse.json(
-        { error: 'Product ID is required' },
+        { error: 'Group ID is required' },
         { status: 400 }
       )
     }
 
-    // Delete associated documents and chunks
-    const { data: documents } = await supabase
-      .from('documents')
-      .select('id')
-      .eq('product_id', id)
-
-    if (documents) {
-      for (const doc of documents) {
-        await supabase.from('document_chunks').delete().eq('document_id', doc.id)
-      }
-      await supabase.from('documents').delete().eq('product_id', id)
-    }
-
-    // Delete conversations and messages
-    const { data: conversations } = await supabase
-      .from('conversations')
-      .select('id')
-      .eq('product_id', id)
-
-    if (conversations) {
-      for (const conv of conversations) {
-        await supabase.from('messages').delete().eq('conversation_id', conv.id)
-      }
-      await supabase.from('conversations').delete().eq('product_id', id)
-    }
-
-    // Delete product
-    const { error } = await supabase.from('products').delete().eq('id', id)
+    const { error } = await (supabase
+      .from('groups') as any)
+      .delete()
+      .eq('id', id)
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })

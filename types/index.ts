@@ -8,14 +8,26 @@ export interface User {
   created_at: string
 }
 
+// Group types
+export interface Group {
+  id: string
+  name: string
+  description: string | null
+  created_at: string
+  updated_at: string
+  products?: Product[]
+}
+
 // Product types
 export interface Product {
   id: string
   name: string
   description: string | null
   image_url: string | null
+  group_id: string | null
   created_at: string
   updated_at: string
+  group?: Group
 }
 
 // Document types

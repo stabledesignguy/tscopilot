@@ -5,7 +5,7 @@ import {
   LayoutDashboard,
   Package,
   FileText,
-  Settings,
+  FolderTree,
   ArrowLeft,
 } from 'lucide-react'
 
@@ -36,6 +36,7 @@ export default async function AdminLayout({
 
   const navItems = [
     { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
+    { href: '/admin/groups', icon: FolderTree, label: 'Groups' },
     { href: '/admin/products', icon: Package, label: 'Products' },
     { href: '/admin/documents', icon: FileText, label: 'Documents' },
   ]

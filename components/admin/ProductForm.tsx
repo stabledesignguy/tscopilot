@@ -1,13 +1,18 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import type { Product } from '@/types'
+import type { Product, Group } from '@/types'
 
 interface ProductFormProps {
   product?: Product
-  onSubmit: (data: { name: string; description: string; image_url: string }) => Promise<void>
+  onSubmit: (data: {
+    name: string
+    description: string
+    image_url: string
+    group_id: string | null
+  }) => Promise<void>
   onCancel: () => void
 }
 
@@ -15,8 +20,23 @@ export function ProductForm({ product, onSubmit, onCancel }: ProductFormProps) {
   const [name, setName] = useState(product?.name || '')
   const [description, setDescription] = useState(product?.description || '')
   const [imageUrl, setImageUrl] = useState(product?.image_url || '')
+  const [groupId, setGroupId] = useState<string>(product?.group_id || '')
+  const [groups, setGroups] = useState<Group[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchGroups = async () => {
+      try {
+        const response = await fetch('/api/groups')
+        const data = await response.json()
+        setGroups(data.groups || [])
+      } catch (error) {
+        console.error('Failed to fetch groups:', error)
+      }
+    }
+    fetchGroups()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -33,6 +53,7 @@ export function ProductForm({ product, onSubmit, onCancel }: ProductFormProps) {
         name: name.trim(),
         description: description.trim(),
         image_url: imageUrl.trim(),
+        group_id: groupId || null,
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save product')
@@ -67,6 +88,28 @@ export function ProductForm({ product, onSubmit, onCancel }: ProductFormProps) {
           rows={3}
           className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
         />
+      </div>
+
+      <div>
+        <label
+          htmlFor="group"
+          className="block text-sm font-medium text-slate-700 mb-1"
+        >
+          Group
+        </label>
+        <select
+          id="group"
+          value={groupId}
+          onChange={(e) => setGroupId(e.target.value)}
+          className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors bg-white"
+        >
+          <option value="">No Group</option>
+          {groups.map((group) => (
+            <option key={group.id} value={group.id}>
+              {group.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       <Input
