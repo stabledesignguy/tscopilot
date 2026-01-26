@@ -135,8 +135,26 @@ export async function POST(request: NextRequest) {
       console.log('RAG: Retrieved', chunks.length, 'chunks')
       if (chunks.length > 0) {
         console.log('RAG: Top chunk score:', chunks[0]?.score)
-        const context = chunks.map((c) => c.chunk.content).join('\n\n---\n\n')
-        systemPrompt = buildRAGPrompt(context, product?.name || 'this product')
+
+        // Build context with source information
+        const contextParts = chunks.map((c, index) => {
+          const sourceInfo = c.document
+            ? `[Source ${index + 1}: ${c.document.filename}](${c.document.file_url})`
+            : `[Source ${index + 1}]`
+          return `${sourceInfo}\n${c.chunk.content}`
+        })
+        const context = contextParts.join('\n\n---\n\n')
+
+        // Build sources list for the prompt
+        const sources = chunks
+          .filter(c => c.document)
+          .map((c, index) => ({
+            index: index + 1,
+            filename: c.document!.filename,
+            url: c.document!.file_url,
+          }))
+
+        systemPrompt = buildRAGPrompt(context, product?.name || 'this product', sources)
         console.log('RAG: Using RAG prompt with context length:', context.length)
       } else {
         console.log('RAG: No chunks found, using default prompt')

@@ -170,7 +170,23 @@ If source information is incomplete:
 - **Unclear section:** [Document Title, approximate location: Chapter X, Page XX]
 - **Multiple possible sources:** Cite all relevant sources`
 
-export function buildRAGPrompt(context: string, productName: string): string {
+export interface DocumentSource {
+  index: number
+  filename: string
+  url: string
+}
+
+export function buildRAGPrompt(context: string, productName: string, sources: DocumentSource[] = []): string {
+  // Build sources reference section
+  const sourcesSection = sources.length > 0
+    ? `
+## Available Source Documents
+The following source documents are available for citation. Use the exact URLs provided when creating footnote links:
+
+${sources.map(s => `- **[${s.index}]** ${s.filename}: ${s.url}`).join('\n')}
+`
+    : ''
+
   return `You are a technical support AI assistant specializing in ${productName}.
 
 ## Your Primary Role
@@ -179,7 +195,7 @@ Your primary role is to assist technical support agents who support complex medi
 Refer to the available documentation to find precise and relevant answers to users' queries regarding the Dräger Primus medical device.
 
 If the query relates to a device error code or a device troubleshooting problem, begin looking at the document with the file name "Maintenance_curative_Draeger_Primus.pdf" and then follow the Steps listed below.
-
+${sourcesSection}
 ## Documentation Context
 The following documentation has been retrieved as relevant to the user's question:
 
@@ -271,5 +287,29 @@ If source information is incomplete:
 3. **Structure Your Response**: Use headings, bullet points, and numbered lists for clarity.
 4. **Practical Examples**: When helpful, provide examples of how to apply the information.
 5. **Acknowledge Limitations**: If the documentation doesn't fully answer the question, say so honestly.
-6. **Stay On Topic**: Focus on ${productName} and the user's specific question.`
+6. **Stay On Topic**: Focus on ${productName} and the user's specific question.
+
+## CRITICAL: Footnotes Section Requirement
+
+You MUST end every response with a "Sources" section containing clickable links to the source documents. Use the exact URLs from the "Available Source Documents" section above.
+
+**Format for the Sources section:**
+
+---
+
+**Sources:**
+
+1. [Document Filename, Section/Page info](exact_url_from_sources_list)
+2. [Another Document, Section/Page info](exact_url_from_sources_list)
+
+**Example:**
+
+---
+
+**Sources:**
+
+1. [Maintenance_curative_Draeger_Primus.pdf, Section 3.2 "Error Codes", Page 45](https://example.supabase.co/storage/v1/object/public/documents/file.pdf)
+2. [User_Manual_Primus.pdf, Chapter 5 "Troubleshooting", Pages 89-92](https://example.supabase.co/storage/v1/object/public/documents/manual.pdf)
+
+This Sources section with clickable links is MANDATORY for every response.`
 }
