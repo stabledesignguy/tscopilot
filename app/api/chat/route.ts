@@ -77,6 +77,22 @@ export async function POST(request: NextRequest) {
 
     // Get or create conversation
     let activeConversationId = conversationId
+
+    // If conversationId provided, verify it belongs to this product
+    if (activeConversationId) {
+      const { data: existingConv } = await (supabase
+        .from('conversations') as any)
+        .select('product_id')
+        .eq('id', activeConversationId)
+        .single()
+
+      // If conversation doesn't exist or belongs to different product, create new one
+      if (!existingConv || existingConv.product_id !== productId) {
+        console.log('Conversation mismatch - creating new conversation for product:', productId)
+        activeConversationId = null
+      }
+    }
+
     if (!activeConversationId) {
       const { data: newConversation, error: convError } = await (supabase
         .from('conversations') as any)
@@ -92,6 +108,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: convError.message }, { status: 500 })
       }
       activeConversationId = newConversation.id
+      console.log('Created new conversation:', activeConversationId, 'for product:', productId)
     }
 
     // Save user message
@@ -130,11 +147,13 @@ export async function POST(request: NextRequest) {
     // Retrieve relevant document chunks for RAG
     let systemPrompt = defaultSystemPrompt
     try {
-      console.log('RAG: Retrieving chunks for productId:', productId, 'query:', message.slice(0, 50))
+      console.log('RAG: Product name:', product?.name, '| Product ID:', productId)
+      console.log('RAG: Query:', message.slice(0, 50))
       const chunks = await retrieveRelevantChunks(message, productId, 5)
       console.log('RAG: Retrieved', chunks.length, 'chunks')
       if (chunks.length > 0) {
         console.log('RAG: Top chunk score:', chunks[0]?.score)
+        console.log('RAG: Sources:', chunks.map(c => c.document?.filename).join(', '))
 
         // Build context with source information
         const contextParts = chunks.map((c, index) => {

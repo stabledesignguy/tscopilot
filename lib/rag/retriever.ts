@@ -25,6 +25,7 @@ export async function retrieveRelevantChunks(
 
   // Use pgvector similarity search
   // This requires the match_documents function to be created in Supabase
+  console.log('Vector search: filtering by product_id:', productId)
   const { data, error } = await supabase.rpc('match_documents', {
     query_embedding: queryEmbedding,
     match_threshold: threshold,
@@ -34,12 +35,12 @@ export async function retrieveRelevantChunks(
 
   if (error) {
     console.error('Vector search error:', error)
-    console.log('Falling back to text search')
+    console.log('Falling back to text search for product:', productId)
     // Fallback to basic text search if vector search fails
     return fallbackTextSearch(query, productId, limit)
   }
 
-  console.log('Vector search returned', data?.length || 0, 'results')
+  console.log('Vector search returned', data?.length || 0, 'results for product:', productId)
 
   // Get unique document IDs
   const documentIds = [...new Set((data || []).map((item: any) => item.document_id))]
