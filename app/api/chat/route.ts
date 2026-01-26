@@ -5,6 +5,7 @@ import {
   getDefaultProvider,
   buildRAGPrompt,
   defaultSystemPrompt,
+  isProviderConfigured,
 } from '@/lib/llm'
 import { retrieveRelevantChunks } from '@/lib/rag/retriever'
 import type { LLMProvider, LLMMessage } from '@/types'
@@ -29,8 +30,21 @@ export async function OPTIONS() {
 }
 
 export async function GET() {
+  // Check which LLM providers are configured
+  const providers = {
+    claude: isProviderConfigured('claude'),
+    openai: isProviderConfigured('openai'),
+    gemini: isProviderConfigured('gemini'),
+  }
+  const defaultProvider = getDefaultProvider()
+
   return NextResponse.json(
-    { status: 'Chat API is running', method: 'GET' },
+    {
+      status: 'Chat API is running',
+      method: 'GET',
+      providers,
+      defaultProvider,
+    },
     {
       headers: {
         'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
@@ -128,6 +142,15 @@ export async function POST(request: NextRequest) {
 
     // Generate streaming response
     const provider: LLMProvider = llmProvider || getDefaultProvider()
+
+    // Check if the provider is configured
+    if (!isProviderConfigured(provider)) {
+      return NextResponse.json(
+        { error: `LLM provider '${provider}' is not configured. Please add the API key in Vercel environment variables.` },
+        { status: 500 }
+      )
+    }
+
     const { stream } = await streamResponse(messages, systemPrompt, {
       provider,
     })
@@ -170,8 +193,9 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Chat error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: `Chat failed: ${errorMessage}` },
       { status: 500, headers: { 'Cache-Control': 'no-store, max-age=0' } }
     )
   }
