@@ -12,6 +12,8 @@ export default function GroupsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingGroup, setEditingGroup] = useState<Group | null>(null)
   const [formData, setFormData] = useState({ name: '', description: '' })
+  const [isSaving, setIsSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const fetchGroups = async () => {
     try {
@@ -31,35 +33,35 @@ export default function GroupsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
+    setIsSaving(true)
 
     try {
-      if (editingGroup) {
-        // Update existing group
-        const response = await fetch('/api/groups', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: editingGroup.id, ...formData }),
-        })
+      const url = '/api/groups'
+      const method = editingGroup ? 'PUT' : 'POST'
+      const body = editingGroup
+        ? { id: editingGroup.id, ...formData }
+        : formData
 
-        if (response.ok) {
-          fetchGroups()
-          closeModal()
-        }
-      } else {
-        // Create new group
-        const response = await fetch('/api/groups', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData),
-        })
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
 
-        if (response.ok) {
-          fetchGroups()
-          closeModal()
-        }
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to save group')
       }
-    } catch (error) {
-      console.error('Failed to save group:', error)
+
+      fetchGroups()
+      closeModal()
+    } catch (err) {
+      console.error('Failed to save group:', err)
+      setError(err instanceof Error ? err.message : 'Failed to save group')
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -96,6 +98,7 @@ export default function GroupsPage() {
     setIsModalOpen(false)
     setEditingGroup(null)
     setFormData({ name: '', description: '' })
+    setError(null)
   }
 
   return (
@@ -230,12 +233,17 @@ export default function GroupsPage() {
                   rows={3}
                 />
               </div>
+              {error && (
+                <div className="p-3 rounded-lg bg-red-50 text-red-700 text-sm">
+                  {error}
+                </div>
+              )}
               <div className="flex gap-3 justify-end pt-4">
-                <Button type="button" variant="ghost" onClick={closeModal}>
+                <Button type="button" variant="ghost" onClick={closeModal} disabled={isSaving}>
                   Cancel
                 </Button>
-                <Button type="submit">
-                  {editingGroup ? 'Save Changes' : 'Create Group'}
+                <Button type="submit" disabled={isSaving}>
+                  {isSaving ? 'Saving...' : editingGroup ? 'Save Changes' : 'Create Group'}
                 </Button>
               </div>
             </form>
