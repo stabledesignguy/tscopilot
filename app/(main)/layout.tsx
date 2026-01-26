@@ -34,9 +34,9 @@ export default async function MainLayout({
   const isAdmin = (profile as { role: string } | null)?.role === 'admin'
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between">
+    <div className="h-screen bg-slate-50 flex flex-col overflow-hidden">
+      {/* Header - Fixed at top */}
+      <header className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between flex-shrink-0 z-10">
         <div className="flex items-center gap-3">
           <div className="bg-primary-600 p-2 rounded-lg">
             <MessageSquare className="w-5 h-5 text-white" />

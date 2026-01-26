@@ -50,9 +50,9 @@ export function ChatWindow({
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-white">
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+    <div className="flex-1 flex flex-col bg-white overflow-hidden">
+      {/* Header - Fixed at top of chat area */}
+      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white flex-shrink-0 z-10">
         <div>
           <h1 className="text-lg font-semibold text-slate-900">{product.name}</h1>
           {product.description && (

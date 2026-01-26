@@ -80,9 +80,9 @@ export function ProductList({
   }
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Search */}
-      <div className="p-4 border-b border-slate-200">
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* Search - Fixed at top */}
+      <div className="p-4 border-b border-slate-200 flex-shrink-0 bg-white">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
