@@ -20,6 +20,21 @@ export async function retrieveRelevantChunks(
 ): Promise<ChunkWithSource[]> {
   const supabase = await createServiceClient()
 
+  // Debug: Check if chunks have product_id populated for this product
+  const { data: chunkCheck } = await supabase
+    .from('document_chunks')
+    .select('id, product_id, document_id')
+    .eq('product_id', productId)
+    .limit(1)
+
+  const { count: totalChunksForProduct } = await supabase
+    .from('document_chunks')
+    .select('*', { count: 'exact', head: true })
+    .eq('product_id', productId)
+
+  console.log(`DEBUG - Chunks with product_id=${productId}: ${totalChunksForProduct || 0}`)
+  console.log(`DEBUG - Sample chunk:`, chunkCheck?.[0] || 'none found')
+
   // Generate embedding for the query
   const queryEmbedding = await generateEmbeddings(query)
 
@@ -42,8 +57,33 @@ export async function retrieveRelevantChunks(
 
   console.log('Vector search returned', data?.length || 0, 'results for product:', productId)
 
+  // Debug: Log the actual chunk details to verify product filtering
+  if (data && data.length > 0) {
+    console.log('DEBUG - Returned chunks:')
+    for (const item of data) {
+      console.log(`  - Chunk ID: ${item.id}, Doc ID: ${item.document_id}, Similarity: ${item.similarity?.toFixed(3)}`)
+    }
+  }
+
   // Get unique document IDs
   const documentIds = [...new Set((data || []).map((item: any) => item.document_id))]
+
+  // Debug: Verify documents belong to the correct product
+  const { data: docsWithProduct } = await supabase
+    .from('documents')
+    .select('id, filename, product_id')
+    .in('id', documentIds)
+
+  if (docsWithProduct) {
+    console.log('DEBUG - Documents for returned chunks:')
+    for (const doc of docsWithProduct) {
+      const matchesProduct = doc.product_id === productId
+      console.log(`  - Doc: ${doc.filename}, Product ID: ${doc.product_id}, Matches requested: ${matchesProduct}`)
+      if (!matchesProduct) {
+        console.error(`  *** MISMATCH: Document ${doc.filename} belongs to product ${doc.product_id}, not ${productId}`)
+      }
+    }
+  }
 
   // Fetch document info for all chunks
   const { data: documents } = await supabase
