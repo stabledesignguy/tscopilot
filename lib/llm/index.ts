@@ -293,14 +293,17 @@ If source information is incomplete:
 
 You MUST end every response with a "Sources" section containing clickable links to the source documents. Use the exact URLs from the "Available Source Documents" section above.
 
+**IMPORTANT: Page-specific linking**
+To open the PDF to a specific page, append \`#page=X\` to the URL where X is the FIRST page number where the information was found.
+
 **Format for the Sources section:**
 
 ---
 
 **Sources:**
 
-1. [Document Filename, Section/Page info](exact_url_from_sources_list)
-2. [Another Document, Section/Page info](exact_url_from_sources_list)
+1. [Document Filename, Section/Page info](exact_url_from_sources_list#page=FIRST_PAGE_NUMBER)
+2. [Another Document, Section/Page info](exact_url_from_sources_list#page=FIRST_PAGE_NUMBER)
 
 **Example:**
 
@@ -308,8 +311,10 @@ You MUST end every response with a "Sources" section containing clickable links 
 
 **Sources:**
 
-1. [Maintenance_curative_Draeger_Primus.pdf, Section 3.2 "Error Codes", Page 45](https://example.supabase.co/storage/v1/object/public/documents/file.pdf)
-2. [User_Manual_Primus.pdf, Chapter 5 "Troubleshooting", Pages 89-92](https://example.supabase.co/storage/v1/object/public/documents/manual.pdf)
+1. [Maintenance_curative_Draeger_Primus.pdf, Section 3.2 "Error Codes", Page 45](https://example.supabase.co/storage/v1/object/public/documents/file.pdf#page=45)
+2. [User_Manual_Primus.pdf, Chapter 5 "Troubleshooting", Pages 89-92](https://example.supabase.co/storage/v1/object/public/documents/manual.pdf#page=89)
+
+Note: Always use \`#page=X\` at the end of the URL where X is the starting page number. This opens the PDF directly to that page.
 
 This Sources section with clickable links is MANDATORY for every response.`
 }
