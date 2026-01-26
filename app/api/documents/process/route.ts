@@ -58,14 +58,14 @@ export async function POST(request: NextRequest) {
         const chunk = chunks[i]
         const embedding = await generateEmbeddings(chunk)
 
-        await supabase.from('document_chunks').insert({
+        await (supabase.from('document_chunks') as any).insert({
           document_id: documentId,
+          product_id: document.product_id,
           content: chunk,
           embedding,
           chunk_index: i,
           metadata: {
             filename: document.filename,
-            product_id: document.product_id,
           },
         })
       }

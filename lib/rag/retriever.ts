@@ -76,20 +76,7 @@ async function fallbackTextSearch(
 ): Promise<ChunkWithSource[]> {
   const supabase = await createServiceClient()
 
-  // Get documents for the product
-  const { data: documents } = await supabase
-    .from('documents')
-    .select('id, filename, file_url')
-    .eq('product_id', productId)
-
-  if (!documents || documents.length === 0) {
-    return []
-  }
-
-  const documentIds = documents.map((d: any) => d.id)
-  const documentMap = new Map(
-    documents.map((doc: any) => [doc.id, doc])
-  )
+  console.log('Fallback text search: filtering by product_id:', productId)
 
   // Simple text search using ILIKE
   const keywords = query
@@ -102,18 +89,65 @@ async function fallbackTextSearch(
     return []
   }
 
-  const { data: chunks, error } = await supabase
-    .from('document_chunks')
-    .select('*')
-    .in('document_id', documentIds)
-    .limit(limit * 2)
+  // Get chunks directly filtered by product_id
+  const { data: chunks, error } = await (supabase
+    .from('document_chunks') as any)
+    .select('*, documents!inner(id, filename, file_url, product_id)')
+    .eq('product_id', productId)
+    .limit(limit * 3)
 
-  if (error || !chunks) {
-    return []
+  if (error) {
+    console.error('Fallback search error:', error)
+    // Try alternative: filter via documents table
+    const { data: documents } = await supabase
+      .from('documents')
+      .select('id, filename, file_url')
+      .eq('product_id', productId)
+
+    if (!documents || documents.length === 0) {
+      return []
+    }
+
+    const documentIds = documents.map((d: any) => d.id)
+    const documentMap = new Map(documents.map((doc: any) => [doc.id, doc]))
+
+    const { data: fallbackChunks } = await supabase
+      .from('document_chunks')
+      .select('*')
+      .in('document_id', documentIds)
+      .limit(limit * 3)
+
+    if (!fallbackChunks) return []
+
+    const scoredChunks = fallbackChunks
+      .map((chunk: any) => {
+        const content = chunk.content.toLowerCase()
+        const matchCount = keywords.filter((k) => content.includes(k)).length
+        const score = matchCount / keywords.length
+        return { chunk, score, document: documentMap.get(chunk.document_id) }
+      })
+      .filter((item) => item.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit)
+
+    console.log('Fallback search (via documents) returned', scoredChunks.length, 'results')
+    return scoredChunks
   }
 
+  // Build document map from joined data
+  const documentMap = new Map<string, any>()
+  chunks?.forEach((chunk: any) => {
+    if (chunk.documents) {
+      documentMap.set(chunk.document_id, {
+        id: chunk.documents.id,
+        filename: chunk.documents.filename,
+        file_url: chunk.documents.file_url,
+      })
+    }
+  })
+
   // Score chunks by keyword matches
-  const scoredChunks = chunks
+  const scoredChunks = (chunks || [])
     .map((chunk: any) => {
       const content = chunk.content.toLowerCase()
       const matchCount = keywords.filter((k) => content.includes(k)).length
@@ -128,6 +162,7 @@ async function fallbackTextSearch(
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)
 
+  console.log('Fallback text search returned', scoredChunks.length, 'results for product:', productId)
   return scoredChunks
 }
 
