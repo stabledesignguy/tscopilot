@@ -49,8 +49,14 @@ export async function retrieveRelevantChunks(
   // Use pgvector similarity search
   // This requires the match_documents function to be created in Supabase
   console.log('Vector search: filtering by product_id:', productId)
+
+  // Format embedding as a string for PostgreSQL vector type
+  const embeddingString = `[${queryEmbedding.join(',')}]`
+  console.log('DEBUG - Embedding string length:', embeddingString.length)
+  console.log('DEBUG - First 5 values:', queryEmbedding.slice(0, 5))
+
   const { data, error } = await supabase.rpc('match_documents', {
-    query_embedding: queryEmbedding,
+    query_embedding: embeddingString,
     match_threshold: threshold,
     match_count: limit,
     filter_product_id: productId,
