@@ -182,13 +182,15 @@ export async function POST(request: NextRequest) {
         })
         const context = contextParts.join('\n\n---\n\n')
 
-        // Build sources list for the prompt
+        // Build sources list for the prompt (including page info)
         const sources = chunks
           .filter(c => c.document)
           .map((c, index) => ({
             index: index + 1,
             filename: c.document!.filename,
             url: c.document!.file_url,
+            pageNumbers: c.pageInfo?.pageNumbers,
+            primaryPage: c.pageInfo?.primaryPage,
           }))
 
         // Build source metadata with page info for frontend
