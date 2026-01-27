@@ -48,31 +48,66 @@ export async function GET(request: NextRequest) {
 
     const { data: documents } = await docsQuery.limit(20)
 
-    // Get chunk counts for each document
+    // Get chunk info for each document - check product_id and embedding status
     const docIds = documents?.map(d => d.id) || []
-    const chunkCounts: Record<string, number> = {}
+    const chunkInfo: Record<string, { total: number; with_product_id: number; with_embedding: number }> = {}
 
     if (docIds.length > 0) {
       for (const docId of docIds) {
-        const { count } = await supabase
+        // Total chunks
+        const { count: total } = await supabase
           .from('document_chunks')
           .select('*', { count: 'exact', head: true })
           .eq('document_id', docId)
-        chunkCounts[docId] = count || 0
+
+        // Chunks with product_id set
+        const { count: withProductId } = await supabase
+          .from('document_chunks')
+          .select('*', { count: 'exact', head: true })
+          .eq('document_id', docId)
+          .not('product_id', 'is', null)
+
+        // Chunks with embedding set
+        const { count: withEmbedding } = await supabase
+          .from('document_chunks')
+          .select('*', { count: 'exact', head: true })
+          .eq('document_id', docId)
+          .not('embedding', 'is', null)
+
+        chunkInfo[docId] = {
+          total: total || 0,
+          with_product_id: withProductId || 0,
+          with_embedding: withEmbedding || 0,
+        }
       }
     }
 
     // Build response
     const documentsWithCounts = documents?.map(doc => ({
       ...doc,
-      chunk_count: chunkCounts[doc.id] || 0,
+      chunks: chunkInfo[doc.id] || { total: 0, with_product_id: 0, with_embedding: 0 },
       product_name: products?.find(p => p.id === doc.product_id)?.name || 'Unknown'
     }))
+
+    // Check if any chunks have product_id directly (migration status)
+    const { count: chunksWithProductId } = await supabase
+      .from('document_chunks')
+      .select('*', { count: 'exact', head: true })
+      .not('product_id', 'is', null)
+
+    const { count: totalChunks } = await supabase
+      .from('document_chunks')
+      .select('*', { count: 'exact', head: true })
 
     return NextResponse.json({
       products,
       documents: documentsWithCounts,
       total_documents: documents?.length || 0,
+      migration_status: {
+        total_chunks: totalChunks || 0,
+        chunks_with_product_id: chunksWithProductId || 0,
+        migration_complete: (chunksWithProductId || 0) === (totalChunks || 0) && (totalChunks || 0) > 0,
+      }
     })
   } catch (error) {
     console.error('Debug RAG error:', error)
