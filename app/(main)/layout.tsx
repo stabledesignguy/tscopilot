@@ -33,13 +33,15 @@ export default async function MainLayout({
   const isAdmin = (profile as { role: string } | null)?.role === 'admin'
 
   return (
-    <div className="h-screen bg-slate-50 flex flex-col overflow-hidden">
-      {/* Header - Fixed at top */}
-      <MainHeader
-        email={user.email || ''}
-        isAdmin={isAdmin}
-        signOutAction={signOut}
-      />
+    <div className="h-screen bg-slate-50 flex flex-col">
+      {/* Header - Fixed at top, with relative positioning for dropdown */}
+      <div className="relative z-20 flex-shrink-0">
+        <MainHeader
+          email={user.email || ''}
+          isAdmin={isAdmin}
+          signOutAction={signOut}
+        />
+      </div>
 
       {/* Main content */}
       <main className="flex-1 flex overflow-hidden">{children}</main>

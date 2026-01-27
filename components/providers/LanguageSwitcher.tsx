@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Globe, ChevronDown } from 'lucide-react'
+import { Globe, ChevronDown, Check } from 'lucide-react'
 import { useLanguage } from './LanguageProvider'
 import { languages, type Language } from '@/lib/i18n/languages'
 
@@ -9,8 +9,6 @@ export function LanguageSwitcher() {
   const { language, setLanguage } = useLanguage()
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
-
-  const currentLanguage = languages.find((l) => l.code === language)
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -38,6 +36,7 @@ export function LanguageSwitcher() {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
         aria-label="Select language"
+        type="button"
       >
         <Globe className="w-4 h-4" />
         <span className="uppercase font-medium">{language}</span>
@@ -47,20 +46,24 @@ export function LanguageSwitcher() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-1 py-1 w-36 bg-white rounded-lg shadow-lg border border-slate-200 z-50">
+        <div
+          className="absolute right-0 top-full mt-1 py-2 w-40 bg-white rounded-lg shadow-lg border border-slate-200 z-[100]"
+          style={{ minHeight: 'auto' }}
+        >
           {languages.map((lang) => (
             <button
               key={lang.code}
+              type="button"
               onClick={() => handleSelect(lang.code)}
-              className={`w-full px-3 py-2 text-left text-sm hover:bg-slate-50 transition-colors flex items-center justify-between ${
+              className={`w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 transition-colors flex items-center justify-between ${
                 language === lang.code
-                  ? 'text-primary-600 font-medium'
+                  ? 'text-primary-600 font-medium bg-primary-50'
                   : 'text-slate-700'
               }`}
             >
               <span>{lang.nativeName}</span>
               {language === lang.code && (
-                <span className="text-primary-600">✓</span>
+                <Check className="w-4 h-4 text-primary-600" />
               )}
             </button>
           ))}
