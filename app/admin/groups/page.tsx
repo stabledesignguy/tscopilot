@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Pencil, Trash2, FolderTree, Package } from 'lucide-react'
+import { Plus, Pencil, Trash2, FolderTree, Package, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardHeader } from '@/components/ui/Card'
+import { useTranslation } from '@/lib/i18n/useTranslation'
 import type { Group } from '@/types'
 
 export default function GroupsPage() {
@@ -14,6 +15,7 @@ export default function GroupsPage() {
   const [formData, setFormData] = useState({ name: '', description: '' })
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { t } = useTranslation()
 
   const fetchGroups = async () => {
     try {
@@ -52,21 +54,21 @@ export default function GroupsPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to save group')
+        throw new Error(data.error || t('common.error'))
       }
 
       fetchGroups()
       closeModal()
     } catch (err) {
       console.error('Failed to save group:', err)
-      setError(err instanceof Error ? err.message : 'Failed to save group')
+      setError(err instanceof Error ? err.message : t('common.error'))
     } finally {
       setIsSaving(false)
     }
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this group? Products in this group will be ungrouped.')) {
+    if (!confirm(t('groups.deleteConfirm'))) {
       return
     }
 
@@ -101,34 +103,47 @@ export default function GroupsPage() {
     setError(null)
   }
 
+  const getProductCountText = (count: number) => {
+    if (count === 1) {
+      return `1 ${t('groups.product')}`
+    }
+    return `${count} ${t('groups.products')}`
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+      </div>
+    )
+  }
+
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Groups</h1>
-          <p className="text-slate-500">Organize products into groups</p>
+          <h1 className="text-2xl font-bold text-slate-900">{t('groups.title')}</h1>
+          <p className="text-slate-500">{t('groups.subtitle')}</p>
         </div>
         <Button onClick={() => openModal()}>
           <Plus className="w-4 h-4 mr-2" />
-          Add Group
+          {t('groups.addGroup')}
         </Button>
       </div>
 
-      {isLoading ? (
-        <div className="text-center py-12 text-slate-500">Loading...</div>
-      ) : groups.length === 0 ? (
+      {groups.length === 0 ? (
         <Card>
           <CardContent className="text-center py-12">
             <FolderTree className="w-12 h-12 text-slate-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-slate-900 mb-2">
-              No groups yet
+              {t('groups.noGroupsYet')}
             </h3>
             <p className="text-slate-500 mb-4">
-              Create groups to organize your products
+              {t('groups.createGroupsDesc')}
             </p>
             <Button onClick={() => openModal()}>
               <Plus className="w-4 h-4 mr-2" />
-              Create First Group
+              {t('groups.createFirstGroup')}
             </Button>
           </CardContent>
         </Card>
@@ -168,10 +183,7 @@ export default function GroupsPage() {
               <CardContent>
                 <div className="flex items-center gap-2 text-sm text-slate-500">
                   <Package className="w-4 h-4" />
-                  <span>
-                    {group.products?.length || 0} product
-                    {(group.products?.length || 0) !== 1 ? 's' : ''}
-                  </span>
+                  <span>{getProductCountText(group.products?.length || 0)}</span>
                 </div>
                 {group.products && group.products.length > 0 && (
                   <div className="mt-3 space-y-1">
@@ -185,7 +197,7 @@ export default function GroupsPage() {
                     ))}
                     {group.products.length > 5 && (
                       <div className="text-sm text-slate-400 pl-6">
-                        +{group.products.length - 5} more
+                        {t('groups.more', { count: group.products.length - 5 })}
                       </div>
                     )}
                   </div>
@@ -201,12 +213,12 @@ export default function GroupsPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
             <h2 className="text-xl font-bold text-slate-900 mb-4">
-              {editingGroup ? 'Edit Group' : 'Create Group'}
+              {editingGroup ? t('groups.editGroup') : t('groups.createGroup')}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Group Name *
+                  {t('groups.groupName')}
                 </label>
                 <input
                   type="text"
@@ -215,13 +227,13 @@ export default function GroupsPage() {
                     setFormData({ ...formData, name: e.target.value })
                   }
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  placeholder="Enter group name"
+                  placeholder={t('groups.groupNamePlaceholder')}
                   required
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Description
+                  {t('groups.descriptionLabel')}
                 </label>
                 <textarea
                   value={formData.description}
@@ -229,7 +241,7 @@ export default function GroupsPage() {
                     setFormData({ ...formData, description: e.target.value })
                   }
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  placeholder="Optional description"
+                  placeholder={t('groups.descriptionPlaceholder')}
                   rows={3}
                 />
               </div>
@@ -240,10 +252,10 @@ export default function GroupsPage() {
               )}
               <div className="flex gap-3 justify-end pt-4">
                 <Button type="button" variant="ghost" onClick={closeModal} disabled={isSaving}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
                 <Button type="submit" disabled={isSaving}>
-                  {isSaving ? 'Saving...' : editingGroup ? 'Save Changes' : 'Create Group'}
+                  {isSaving ? t('common.saving') : editingGroup ? t('common.saveChanges') : t('groups.createGroup')}
                 </Button>
               </div>
             </form>

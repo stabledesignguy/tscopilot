@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { DocumentUploader } from '@/components/admin/DocumentUploader'
 import { formatFileSize, formatDate } from '@/lib/utils'
+import { useTranslation } from '@/lib/i18n/useTranslation'
 import type { Product, Document } from '@/types'
 
 export default function DocumentsPage() {
@@ -20,6 +21,7 @@ export default function DocumentsPage() {
   const [documents, setDocuments] = useState<Document[]>([])
   const [selectedProductId, setSelectedProductId] = useState<string>('')
   const [isLoading, setIsLoading] = useState(true)
+  const { t } = useTranslation()
 
   const fetchProducts = async () => {
     const response = await fetch('/api/products')
@@ -50,7 +52,7 @@ export default function DocumentsPage() {
   }, [selectedProductId])
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this document?')) return
+    if (!confirm(t('documents.deleteConfirm'))) return
 
     const response = await fetch(`/api/documents?id=${id}`, {
       method: 'DELETE',
@@ -85,8 +87,8 @@ export default function DocumentsPage() {
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">Documents</h1>
-        <p className="text-slate-500">Upload and manage product documentation</p>
+        <h1 className="text-2xl font-bold text-slate-900">{t('documents.title')}</h1>
+        <p className="text-slate-500">{t('documents.subtitle')}</p>
       </div>
 
       {products.length === 0 ? (
@@ -94,10 +96,10 @@ export default function DocumentsPage() {
           <CardContent className="py-12 text-center">
             <FileText className="w-12 h-12 mx-auto text-slate-300 mb-4" />
             <h3 className="text-lg font-medium text-slate-900 mb-2">
-              No products available
+              {t('documents.noProductsAvailable')}
             </h3>
             <p className="text-slate-500">
-              Create a product first before uploading documents
+              {t('documents.createProductFirst')}
             </p>
           </CardContent>
         </Card>
@@ -108,13 +110,13 @@ export default function DocumentsPage() {
             <Card>
               <CardHeader>
                 <h2 className="text-lg font-semibold text-slate-900">
-                  Upload Documents
+                  {t('documents.uploadDocuments')}
                 </h2>
               </CardHeader>
               <CardContent>
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Select Product
+                    {t('documents.selectProduct')}
                   </label>
                   <select
                     value={selectedProductId}
@@ -144,7 +146,7 @@ export default function DocumentsPage() {
             <Card>
               <CardHeader>
                 <h2 className="text-lg font-semibold text-slate-900">
-                  Uploaded Documents
+                  {t('documents.uploadedDocuments')}
                 </h2>
               </CardHeader>
               <CardContent>
@@ -188,7 +190,7 @@ export default function DocumentsPage() {
                   <div className="text-center py-8">
                     <FileText className="w-12 h-12 mx-auto text-slate-300 mb-4" />
                     <p className="text-slate-500">
-                      No documents uploaded for this product yet
+                      {t('documents.noDocumentsYet')}
                     </p>
                   </div>
                 )}

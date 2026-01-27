@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import { Search, Box, FolderTree, ChevronDown, ChevronRight } from 'lucide-react'
 import { ProductCard } from './ProductCard'
+import { useTranslation } from '@/lib/i18n/useTranslation'
 import type { Product } from '@/types'
 
 interface ProductListProps {
@@ -24,6 +25,7 @@ export function ProductList({
 }: ProductListProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
+  const { t } = useTranslation()
 
   const filteredProducts = useMemo(() => {
     if (!searchQuery.trim()) return products
@@ -87,7 +89,7 @@ export function ProductList({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
-            placeholder="Search products..."
+            placeholder={t('products.search')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
@@ -139,7 +141,7 @@ export function ProductList({
                   <div className="space-y-1">
                     {group.products.length > 0 && groupedProducts.some(g => g.groupName) && (
                       <div className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">
-                        Ungrouped
+                        {t('products.ungrouped')}
                       </div>
                     )}
                     {group.products.map((product) => (
@@ -159,7 +161,7 @@ export function ProductList({
           <div className="flex flex-col items-center justify-center py-12 text-slate-400">
             <Box className="w-12 h-12 mb-3" />
             <p className="text-sm">
-              {searchQuery ? 'No products found' : 'No products available'}
+              {searchQuery ? t('products.noResults') : t('products.noProducts')}
             </p>
           </div>
         )}

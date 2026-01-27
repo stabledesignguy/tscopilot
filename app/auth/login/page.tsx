@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Loader2, MessageSquare } from 'lucide-react'
+import { useTranslation } from '@/lib/i18n/useTranslation'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -13,6 +14,7 @@ export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+  const { t } = useTranslation()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -29,7 +31,7 @@ export default function LoginPage() {
           },
         })
         if (error) throw error
-        setError('Check your email for the confirmation link.')
+        setError(t('auth.checkEmail'))
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -40,7 +42,7 @@ export default function LoginPage() {
         router.refresh()
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setError(err instanceof Error ? err.message : t('common.error'))
     } finally {
       setIsLoading(false)
     }
@@ -60,12 +62,12 @@ export default function LoginPage() {
 
           {/* Title */}
           <h2 className="text-xl font-semibold text-center text-slate-800 mb-2">
-            {isSignUp ? 'Create an account' : 'Welcome back'}
+            {isSignUp ? t('auth.createAccount') : t('auth.welcomeBack')}
           </h2>
           <p className="text-slate-500 text-center mb-6">
             {isSignUp
-              ? 'Sign up to start asking questions'
-              : 'Sign in to continue to your account'}
+              ? t('auth.signUpSubtitle')
+              : t('auth.signInSubtitle')}
           </p>
 
           {/* Form */}
@@ -75,7 +77,7 @@ export default function LoginPage() {
                 htmlFor="email"
                 className="block text-sm font-medium text-slate-700 mb-1"
               >
-                Email address
+                {t('auth.email')}
               </label>
               <input
                 id="email"
@@ -84,7 +86,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
-                placeholder="you@example.com"
+                placeholder={t('auth.emailPlaceholder')}
               />
             </div>
 
@@ -93,7 +95,7 @@ export default function LoginPage() {
                 htmlFor="password"
                 className="block text-sm font-medium text-slate-700 mb-1"
               >
-                Password
+                {t('auth.password')}
               </label>
               <input
                 id="password"
@@ -103,14 +105,14 @@ export default function LoginPage() {
                 required
                 minLength={6}
                 className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
-                placeholder="Enter your password"
+                placeholder={t('auth.passwordPlaceholder')}
               />
             </div>
 
             {error && (
               <div
                 className={`p-3 rounded-lg text-sm ${
-                  error.includes('Check your email')
+                  error === t('auth.checkEmail')
                     ? 'bg-green-50 text-green-700'
                     : 'bg-red-50 text-red-700'
                 }`}
@@ -127,16 +129,16 @@ export default function LoginPage() {
               {isLoading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : isSignUp ? (
-                'Sign up'
+                t('auth.signUp')
               ) : (
-                'Sign in'
+                t('auth.signIn')
               )}
             </button>
           </form>
 
           {/* Toggle */}
           <p className="mt-6 text-center text-sm text-slate-600">
-            {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+            {isSignUp ? t('auth.alreadyHaveAccount') : t('auth.dontHaveAccount')}{' '}
             <button
               onClick={() => {
                 setIsSignUp(!isSignUp)
@@ -144,7 +146,7 @@ export default function LoginPage() {
               }}
               className="text-primary-600 hover:text-primary-700 font-medium"
             >
-              {isSignUp ? 'Sign in' : 'Sign up'}
+              {isSignUp ? t('auth.signIn') : t('auth.signUp')}
             </button>
           </p>
         </div>

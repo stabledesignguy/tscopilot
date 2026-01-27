@@ -3,6 +3,7 @@
 import { useState, useRef, type ChangeEvent } from 'react'
 import { Upload, File, X, Loader2, CheckCircle, AlertCircle } from 'lucide-react'
 import { formatFileSize } from '@/lib/utils'
+import { useTranslation } from '@/lib/i18n/useTranslation'
 
 interface DocumentUploaderProps {
   productId: string
@@ -33,6 +34,7 @@ export function DocumentUploader({
   const [files, setFiles] = useState<UploadingFile[]>([])
   const [isDragging, setIsDragging] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const { t } = useTranslation()
 
   const handleFileSelect = (selectedFiles: FileList | null) => {
     if (!selectedFiles) return
@@ -56,7 +58,7 @@ export function DocumentUploader({
           file,
           progress: 0,
           status: 'error',
-          error: 'File too large (max 50MB)',
+          error: t('documents.fileTooLarge'),
         })
       }
     })
@@ -203,10 +205,10 @@ export function DocumentUploader({
           }`}
         />
         <p className="text-sm text-slate-600 mb-1">
-          Drag and drop files here, or click to browse
+          {t('documents.dragAndDrop')}
         </p>
         <p className="text-xs text-slate-400">
-          Supported: PDF, DOCX, TXT, Markdown (max 50MB)
+          {t('documents.supportedFormats')}
         </p>
       </div>
 

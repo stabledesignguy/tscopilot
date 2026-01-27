@@ -2,6 +2,7 @@
 
 import { useState, useRef, type FormEvent, type KeyboardEvent } from 'react'
 import { Send, Paperclip } from 'lucide-react'
+import { useTranslation } from '@/lib/i18n/useTranslation'
 
 interface ChatInputProps {
   onSend: (message: string) => void
@@ -12,10 +13,13 @@ interface ChatInputProps {
 export function ChatInput({
   onSend,
   disabled,
-  placeholder = 'Ask me anything about this product...',
+  placeholder,
 }: ChatInputProps) {
   const [message, setMessage] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const { t } = useTranslation()
+
+  const actualPlaceholder = placeholder || t('chat.placeholder')
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
@@ -55,7 +59,7 @@ export function ChatInput({
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             onInput={handleInput}
-            placeholder={placeholder}
+            placeholder={actualPlaceholder}
             disabled={disabled}
             rows={1}
             className="flex-1 bg-transparent px-4 py-3 text-sm resize-none focus:outline-none disabled:opacity-50 max-h-[200px]"
@@ -71,7 +75,7 @@ export function ChatInput({
           </div>
         </div>
         <p className="mt-2 text-xs text-slate-400 text-center">
-          Press Enter to send, Shift + Enter for new line
+          {t('chat.enterToSend')}
         </p>
       </form>
     </div>

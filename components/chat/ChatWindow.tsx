@@ -5,6 +5,7 @@ import { MessageSquare, Download, Trash2 } from 'lucide-react'
 import { MessageList } from './MessageList'
 import { ChatInput } from './ChatInput'
 import { Button } from '@/components/ui/Button'
+import { useTranslation } from '@/lib/i18n/useTranslation'
 import type { Product, Message, LLMProvider } from '@/types'
 
 interface ChatWindowProps {
@@ -28,6 +29,8 @@ export function ChatWindow({
   isLoading,
   llmProvider,
 }: ChatWindowProps) {
+  const { t } = useTranslation()
+
   const handleSend = useCallback(
     async (message: string) => {
       await onSendMessage(message)
@@ -40,10 +43,10 @@ export function ChatWindow({
       <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 text-slate-400">
         <MessageSquare className="w-16 h-16 mb-4" />
         <h2 className="text-xl font-medium text-slate-600">
-          Select a product to start
+          {t('chat.selectProduct')}
         </h2>
         <p className="mt-2 text-sm">
-          Choose a product from the sidebar to begin asking questions
+          {t('chat.selectProductDesc')}
         </p>
       </div>
     )
@@ -64,11 +67,11 @@ export function ChatWindow({
             <>
               <Button variant="ghost" size="sm" onClick={onExport}>
                 <Download className="w-4 h-4 mr-1" />
-                Export
+                {t('chat.export')}
               </Button>
               <Button variant="ghost" size="sm" onClick={onClear}>
                 <Trash2 className="w-4 h-4 mr-1" />
-                Clear
+                {t('chat.clear')}
               </Button>
             </>
           )}
@@ -79,7 +82,7 @@ export function ChatWindow({
       {messages.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
           <MessageSquare className="w-12 h-12 mb-3" />
-          <p className="text-sm">Ask me anything about {product.name}</p>
+          <p className="text-sm">{t('chat.askAnything', { productName: product.name })}</p>
         </div>
       ) : (
         <MessageList messages={messages} isLoading={isLoading} />
@@ -89,7 +92,7 @@ export function ChatWindow({
       <ChatInput
         onSend={handleSend}
         disabled={isLoading}
-        placeholder={`Ask about ${product.name}...`}
+        placeholder={t('chat.askAbout', { productName: product.name })}
       />
     </div>
   )

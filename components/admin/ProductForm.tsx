@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { useTranslation } from '@/lib/i18n/useTranslation'
 import type { Product, Group } from '@/types'
 
 interface ProductFormProps {
@@ -24,6 +25,7 @@ export function ProductForm({ product, onSubmit, onCancel }: ProductFormProps) {
   const [groups, setGroups] = useState<Group[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { t } = useTranslation()
 
   useEffect(() => {
     const fetchGroups = async () => {
@@ -41,7 +43,7 @@ export function ProductForm({ product, onSubmit, onCancel }: ProductFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim()) {
-      setError('Product name is required')
+      setError(t('products.nameRequired'))
       return
     }
 
@@ -56,7 +58,7 @@ export function ProductForm({ product, onSubmit, onCancel }: ProductFormProps) {
         group_id: groupId || null,
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save product')
+      setError(err instanceof Error ? err.message : t('products.saveFailed'))
     } finally {
       setIsLoading(false)
     }
@@ -66,10 +68,10 @@ export function ProductForm({ product, onSubmit, onCancel }: ProductFormProps) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <Input
         id="name"
-        label="Product Name"
+        label={t('products.productName')}
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder="Enter product name"
+        placeholder={t('products.productNamePlaceholder')}
         required
       />
 
@@ -78,13 +80,13 @@ export function ProductForm({ product, onSubmit, onCancel }: ProductFormProps) {
           htmlFor="description"
           className="block text-sm font-medium text-slate-700 mb-1"
         >
-          Description
+          {t('products.description')}
         </label>
         <textarea
           id="description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Enter product description"
+          placeholder={t('products.descriptionPlaceholder')}
           rows={3}
           className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
         />
@@ -95,7 +97,7 @@ export function ProductForm({ product, onSubmit, onCancel }: ProductFormProps) {
           htmlFor="group"
           className="block text-sm font-medium text-slate-700 mb-1"
         >
-          Group
+          {t('products.group')}
         </label>
         <select
           id="group"
@@ -103,7 +105,7 @@ export function ProductForm({ product, onSubmit, onCancel }: ProductFormProps) {
           onChange={(e) => setGroupId(e.target.value)}
           className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors bg-white"
         >
-          <option value="">No Group</option>
+          <option value="">{t('products.noGroup')}</option>
           {groups.map((group) => (
             <option key={group.id} value={group.id}>
               {group.name}
@@ -114,10 +116,10 @@ export function ProductForm({ product, onSubmit, onCancel }: ProductFormProps) {
 
       <Input
         id="imageUrl"
-        label="Image URL (optional)"
+        label={t('products.imageUrl')}
         value={imageUrl}
         onChange={(e) => setImageUrl(e.target.value)}
-        placeholder="https://example.com/image.png"
+        placeholder={t('products.imageUrlPlaceholder')}
         type="url"
       />
 
@@ -129,10 +131,10 @@ export function ProductForm({ product, onSubmit, onCancel }: ProductFormProps) {
 
       <div className="flex justify-end gap-3 pt-2">
         <Button type="button" variant="secondary" onClick={onCancel}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button type="submit" isLoading={isLoading}>
-          {product ? 'Update Product' : 'Create Product'}
+          {product ? t('products.updateProduct') : t('products.createProduct')}
         </Button>
       </div>
     </form>

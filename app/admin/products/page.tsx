@@ -5,6 +5,7 @@ import { Plus, Pencil, Trash2, Box, Loader2, FolderTree } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { ProductForm } from '@/components/admin/ProductForm'
+import { useTranslation } from '@/lib/i18n/useTranslation'
 import type { Product } from '@/types'
 
 export default function ProductsPage() {
@@ -12,6 +13,7 @@ export default function ProductsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  const { t } = useTranslation()
 
   const fetchProducts = async () => {
     try {
@@ -74,7 +76,7 @@ export default function ProductsPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this product?')) return
+    if (!confirm(t('products.deleteConfirm'))) return
 
     const response = await fetch(`/api/products?id=${id}`, {
       method: 'DELETE',
@@ -97,12 +99,12 @@ export default function ProductsPage() {
     <div className="p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Products</h1>
-          <p className="text-slate-500">Manage your product catalog</p>
+          <h1 className="text-2xl font-bold text-slate-900">{t('products.title')}</h1>
+          <p className="text-slate-500">{t('products.subtitle')}</p>
         </div>
         <Button onClick={() => setShowForm(true)}>
           <Plus className="w-4 h-4 mr-2" />
-          Add Product
+          {t('products.addProduct')}
         </Button>
       </div>
 
@@ -112,7 +114,7 @@ export default function ProductsPage() {
           <Card className="w-full max-w-md mx-4">
             <CardHeader>
               <h2 className="text-lg font-semibold">
-                {editingProduct ? 'Edit Product' : 'New Product'}
+                {editingProduct ? t('products.editProduct') : t('products.newProduct')}
               </h2>
             </CardHeader>
             <CardContent>
@@ -173,7 +175,7 @@ export default function ProductsPage() {
                     onClick={() => setEditingProduct(product)}
                   >
                     <Pencil className="w-4 h-4 mr-1" />
-                    Edit
+                    {t('common.edit')}
                   </Button>
                   <Button
                     variant="ghost"
@@ -182,7 +184,7 @@ export default function ProductsPage() {
                     className="text-red-600 hover:text-red-700 hover:bg-red-50"
                   >
                     <Trash2 className="w-4 h-4 mr-1" />
-                    Delete
+                    {t('common.delete')}
                   </Button>
                 </div>
               </CardContent>
@@ -194,14 +196,14 @@ export default function ProductsPage() {
           <CardContent className="py-12 text-center">
             <Box className="w-12 h-12 mx-auto text-slate-300 mb-4" />
             <h3 className="text-lg font-medium text-slate-900 mb-2">
-              No products yet
+              {t('products.noProductsYet')}
             </h3>
             <p className="text-slate-500 mb-4">
-              Get started by adding your first product
+              {t('products.getStarted')}
             </p>
             <Button onClick={() => setShowForm(true)}>
               <Plus className="w-4 h-4 mr-2" />
-              Add Product
+              {t('products.addProduct')}
             </Button>
           </CardContent>
         </Card>

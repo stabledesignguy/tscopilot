@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { ProductList } from '@/components/products/ProductList'
 import { ChatWindow } from '@/components/chat/ChatWindow'
+import { useTranslation } from '@/lib/i18n/useTranslation'
 import type { Product, Message, LLMProvider } from '@/types'
 
 export default function HomePage() {
@@ -12,6 +13,7 @@ export default function HomePage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [llmProvider, setLlmProvider] = useState<LLMProvider>('claude')
+  const { t } = useTranslation()
 
   // Fetch products
   useEffect(() => {
@@ -155,12 +157,12 @@ export default function HomePage() {
 
     const text = messages
       .map((m) => {
-        const role = m.role === 'user' ? 'You' : 'Assistant'
+        const role = m.role === 'user' ? t('chat.you') : t('chat.assistant')
         return `${role}:\n${m.content}\n`
       })
       .join('\n---\n\n')
 
-    const header = `# Conversation: ${selectedProduct.name}\nExported: ${new Date().toLocaleString()}\n\n---\n\n`
+    const header = `# ${t('chat.conversation', { productName: selectedProduct.name })}\n${t('chat.exported', { date: new Date().toLocaleString() })}\n\n---\n\n`
     const content = header + text
 
     const blob = new Blob([content], { type: 'text/plain' })
@@ -172,14 +174,14 @@ export default function HomePage() {
     a.click()
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
-  }, [selectedProduct, messages])
+  }, [selectedProduct, messages, t])
 
   const handleClear = useCallback(() => {
-    if (confirm('Are you sure you want to clear this conversation?')) {
+    if (confirm(t('chat.clearConfirm'))) {
       setMessages([])
       setConversationId(null)
     }
-  }, [])
+  }, [t])
 
   return (
     <div className="flex-1 flex overflow-hidden">

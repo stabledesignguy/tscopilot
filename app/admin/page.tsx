@@ -1,65 +1,124 @@
-import { createClient } from '@/lib/supabase/server'
+'use client'
+
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader } from '@/components/ui/Card'
-import { Package, FileText, MessageSquare, FolderTree } from 'lucide-react'
+import { Package, FileText, MessageSquare, FolderTree, Loader2 } from 'lucide-react'
+import { useTranslation } from '@/lib/i18n/useTranslation'
 
-export default async function AdminDashboard() {
-  const supabase = await createClient()
+interface Stats {
+  groups: number
+  products: number
+  documents: number
+  conversations: number
+}
 
-  // Fetch statistics
-  const [groupsResult, productsResult, documentsResult, conversationsResult] =
-    await Promise.all([
-      (supabase as any).from('groups').select('id', { count: 'exact', head: true }),
-      supabase.from('products').select('id', { count: 'exact', head: true }),
-      supabase.from('documents').select('id', { count: 'exact', head: true }),
-      supabase
-        .from('conversations')
-        .select('id', { count: 'exact', head: true }),
-    ])
+interface RecentDocument {
+  id: string
+  filename: string
+  processing_status: string
+  products: { name: string } | null
+}
 
-  const stats = [
+export default function AdminDashboard() {
+  const { t } = useTranslation()
+  const [stats, setStats] = useState<Stats | null>(null)
+  const [recentDocuments, setRecentDocuments] = useState<RecentDocument[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch stats
+        const [groupsRes, productsRes, documentsRes] = await Promise.all([
+          fetch('/api/groups'),
+          fetch('/api/products'),
+          fetch('/api/documents'),
+        ])
+
+        const [groupsData, productsData, documentsData] = await Promise.all([
+          groupsRes.json(),
+          productsRes.json(),
+          documentsRes.json(),
+        ])
+
+        setStats({
+          groups: groupsData.groups?.length || 0,
+          products: productsData.products?.length || 0,
+          documents: documentsData.documents?.length || 0,
+          conversations: 0, // Conversations count would need a dedicated endpoint
+        })
+
+        // Get recent documents (last 5)
+        const docs = documentsData.documents || []
+        setRecentDocuments(docs.slice(0, 5))
+      } catch (error) {
+        console.error('Failed to fetch dashboard data:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return t('admin.status.completed')
+      case 'processing':
+        return t('admin.status.processing')
+      case 'failed':
+        return t('admin.status.failed')
+      default:
+        return status
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+      </div>
+    )
+  }
+
+  const statItems = [
     {
-      label: 'Groups',
-      value: groupsResult.count || 0,
+      label: t('admin.groups'),
+      value: stats?.groups || 0,
       icon: FolderTree,
       color: 'bg-indigo-500',
     },
     {
-      label: 'Products',
-      value: productsResult.count || 0,
+      label: t('admin.products'),
+      value: stats?.products || 0,
       icon: Package,
       color: 'bg-blue-500',
     },
     {
-      label: 'Documents',
-      value: documentsResult.count || 0,
+      label: t('admin.documents'),
+      value: stats?.documents || 0,
       icon: FileText,
       color: 'bg-green-500',
     },
     {
-      label: 'Conversations',
-      value: conversationsResult.count || 0,
+      label: t('admin.conversations'),
+      value: stats?.conversations || 0,
       icon: MessageSquare,
       color: 'bg-purple-500',
     },
   ]
 
-  // Fetch recent documents
-  const { data: recentDocuments } = await supabase
-    .from('documents')
-    .select('*, products(name)')
-    .order('created_at', { ascending: false })
-    .limit(5) as { data: Array<{ id: string; filename: string; processing_status: string; products: { name: string } | null }> | null }
-
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
-        <p className="text-slate-500">Overview of your application</p>
+        <h1 className="text-2xl font-bold text-slate-900">{t('admin.dashboard')}</h1>
+        <p className="text-slate-500">{t('admin.dashboardSubtitle')}</p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {stats.map((stat) => (
+        {statItems.map((stat) => (
           <Card key={stat.label}>
             <CardContent className="flex items-center gap-4 py-6">
               <div className={`p-3 rounded-xl ${stat.color}`}>
@@ -78,11 +137,11 @@ export default async function AdminDashboard() {
       <Card>
         <CardHeader>
           <h2 className="text-lg font-semibold text-slate-900">
-            Recent Documents
+            {t('admin.recentDocuments')}
           </h2>
         </CardHeader>
         <CardContent>
-          {recentDocuments && recentDocuments.length > 0 ? (
+          {recentDocuments.length > 0 ? (
             <div className="space-y-3">
               {recentDocuments.map((doc) => (
                 <div
@@ -92,7 +151,7 @@ export default async function AdminDashboard() {
                   <div>
                     <p className="font-medium text-slate-900">{doc.filename}</p>
                     <p className="text-sm text-slate-500">
-                      {(doc.products as any)?.name}
+                      {doc.products?.name}
                     </p>
                   </div>
                   <span
@@ -106,14 +165,14 @@ export default async function AdminDashboard() {
                             : 'bg-slate-100 text-slate-700'
                     }`}
                   >
-                    {doc.processing_status}
+                    {getStatusText(doc.processing_status)}
                   </span>
                 </div>
               ))}
             </div>
           ) : (
             <p className="text-slate-500 text-center py-4">
-              No documents uploaded yet
+              {t('admin.noDocumentsYet')}
             </p>
           )}
         </CardContent>
