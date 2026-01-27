@@ -101,30 +101,19 @@ If the query relates to a device error code or a device troubleshooting problem,
 5. **Verify Accuracy:** Ensure the response is accurate and reflects the most up-to-date information available.
 6. **Retrieval:** Always retrieve your answer from the documentation.
 
-## CRITICAL: All Citations Must Be Clickable Links
+## Citation Guidelines
 
-### Inline Citation Requirements
+### Inline Citations (Required)
 
-Every time you reference information from a document, you MUST use a clickable markdown link format. Use the exact URLs from the "Available Source Documents" section.
+You MUST cite sources inline as you reference information. Use clickable markdown links with the exact URLs from the "Available Source Documents" section.
 
-**Required format for ALL inline citations:**
-\`[Document name, Page X](URL#page=X)\`
+**Format:** \`([Filename, Page X](URL#page=X))\`
 
-**Examples of correct inline citations:**
+**Example response with inline citations:**
 
-According to the maintenance guide ([Maintenance_Guide.pdf, Page 45](URL_FROM_SOURCES#page=45)), the filter should be replaced annually.
+"The O2 sensor should be calibrated every 12 months ([Maintenance_Guide.pdf, Page 45](URL#page=45)). Before starting calibration, ensure the device is powered off ([Safety_Manual.pdf, Page 7](URL#page=7)). The calibration procedure involves three steps ([User_Manual.pdf, Page 23](URL#page=23))..."
 
-The calibration procedure ([User_Manual.pdf, Pages 23-25](URL_FROM_SOURCES#page=23)) requires the following steps...
-
-⚠️ WARNING: Ensure power is disconnected ([Safety_Manual.pdf, Page 7](URL_FROM_SOURCES#page=7)).
-
-**WRONG - Do NOT use plain text citations:**
-❌ [User Manual, Page 47] - This is NOT clickable
-❌ "According to the manual..." - No citation at all
-❌ See page 47 of the User Manual - Not a link
-
-**CORRECT - Always use markdown links:**
-✅ ([User_Manual.pdf, Page 47](https://example.com/doc.pdf#page=47))`
+Always include inline citations throughout your response - not just at the end. This helps users quickly verify information by clicking directly to the source.
 
 export interface DocumentSource {
   index: number
@@ -232,30 +221,19 @@ ${context}
 5. **Verify Accuracy:** Ensure the response is accurate and reflects the most up-to-date information available.
 6. **Retrieval:** Always retrieve your answer from the documentation.
 
-## CRITICAL: All Citations Must Be Clickable Links
+## Citation Guidelines
 
-### Inline Citation Requirements
+### Inline Citations (Required)
 
-Every time you reference information from a document, you MUST use a clickable markdown link format. Use the exact URLs from the "Available Source Documents" section.
+You MUST cite sources inline as you reference information. Use clickable markdown links with the exact URLs from the "Available Source Documents" section.
 
-**Required format for ALL inline citations:**
-\`[Document name, Page X](URL#page=X)\`
+**Format:** \`([Filename, Page X](URL#page=X))\`
 
-**Examples of correct inline citations:**
+**Example response with inline citations:**
 
-According to the maintenance guide ([Maintenance_Guide.pdf, Page 45](URL_FROM_SOURCES#page=45)), the filter should be replaced annually.
+"The O2 sensor should be calibrated every 12 months ([Maintenance_Guide.pdf, Page 45](URL#page=45)). Before starting calibration, ensure the device is powered off ([Safety_Manual.pdf, Page 7](URL#page=7)). The calibration procedure involves three steps ([User_Manual.pdf, Page 23](URL#page=23))..."
 
-The calibration procedure ([User_Manual.pdf, Pages 23-25](URL_FROM_SOURCES#page=23)) requires the following steps...
-
-⚠️ WARNING: Ensure power is disconnected ([Safety_Manual.pdf, Page 7](URL_FROM_SOURCES#page=7)).
-
-**WRONG - Do NOT use plain text citations:**
-❌ [User Manual, Page 47] - This is NOT clickable
-❌ "According to the manual..." - No citation at all
-❌ See page 47 of the User Manual - Not a link
-
-**CORRECT - Always use markdown links:**
-✅ ([User_Manual.pdf, Page 47](https://example.com/doc.pdf#page=47))
+Always include inline citations throughout your response - not just at the end. This helps users quickly verify information by clicking directly to the source.
 
 ## Response Guidelines
 1. **Accuracy First**: Only provide information that is supported by the documentation above. If the answer isn't in the context, clearly state that and offer to help in other ways.
