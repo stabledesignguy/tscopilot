@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useCallback } from 'react'
 import { Bot, User } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { Message } from '@/types'
+import { useSourceContext } from './SourceContext'
 
 interface MessageListProps {
   messages: Message[]
@@ -13,10 +14,32 @@ interface MessageListProps {
 
 export function MessageList({ messages, isLoading }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
+  const { openPDFViewer, findSourceByUrl } = useSourceContext()
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isLoading])
+
+  const handleLinkClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    // Check if this is a PDF link
+    const baseUrl = href.split('#')[0].split('?')[0]
+    const isPDF = baseUrl.toLowerCase().endsWith('.pdf')
+
+    if (isPDF) {
+      e.preventDefault()
+
+      // Extract filename from URL
+      const urlParts = baseUrl.split('/')
+      const filename = decodeURIComponent(urlParts[urlParts.length - 1] || 'document.pdf')
+
+      // Find source metadata for this URL
+      const source = findSourceByUrl(href)
+
+      // Open in custom PDF viewer with highlight info
+      openPDFViewer(baseUrl, filename, source?.pageInfo)
+    }
+    // Non-PDF links will open normally in new tab
+  }, [openPDFViewer, findSourceByUrl])
 
   return (
     <div className="flex-1 overflow-y-auto px-4 py-6">
@@ -120,16 +143,25 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
                           {children}
                         </blockquote>
                       ),
-                      a: ({ href, children }) => (
-                        <a
-                          href={href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary-600 hover:text-primary-700 underline"
-                        >
-                          {children}
-                        </a>
-                      ),
+                      a: ({ href, children }) => {
+                        const isPDF = href?.split('#')[0].split('?')[0].toLowerCase().endsWith('.pdf')
+                        return (
+                          <a
+                            href={href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`text-primary-600 hover:text-primary-700 underline ${isPDF ? 'cursor-pointer' : ''}`}
+                            onClick={href ? (e) => handleLinkClick(e, href) : undefined}
+                          >
+                            {children}
+                            {isPDF && (
+                              <span className="ml-1 text-xs text-yellow-600" title="Opens in PDF viewer with highlights">
+                                [PDF]
+                              </span>
+                            )}
+                          </a>
+                        )
+                      },
                       table: ({ children }) => (
                         <div className="overflow-x-auto my-3">
                           <table className="min-w-full text-sm border-collapse border border-secondary-300 rounded">

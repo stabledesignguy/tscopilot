@@ -5,6 +5,7 @@ import { ProductList } from '@/components/products/ProductList'
 import { ChatWindow } from '@/components/chat/ChatWindow'
 import { useTranslation } from '@/lib/i18n/useTranslation'
 import type { Product, Message, LLMProvider } from '@/types'
+import type { SourceMetadata } from '@/components/chat/SourceContext'
 
 export default function HomePage() {
   const [products, setProducts] = useState<Product[]>([])
@@ -13,6 +14,7 @@ export default function HomePage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [llmProvider, setLlmProvider] = useState<LLMProvider>('claude')
+  const [sourceMetadata, setSourceMetadata] = useState<SourceMetadata[]>([])
   const { t } = useTranslation()
 
   // Fetch products
@@ -109,6 +111,17 @@ export default function HomePage() {
 
         const provider =
           (response.headers.get('X-LLM-Provider') as LLMProvider) || llmProvider
+
+        // Extract source metadata from header for PDF highlighting
+        const sourceMetadataHeader = response.headers.get('X-Source-Metadata')
+        if (sourceMetadataHeader) {
+          try {
+            const metadata = JSON.parse(decodeURIComponent(sourceMetadataHeader))
+            setSourceMetadata(metadata)
+          } catch (e) {
+            console.error('Failed to parse source metadata:', e)
+          }
+        }
 
         // Stream the response
         const reader = response.body?.getReader()
@@ -214,6 +227,7 @@ export default function HomePage() {
           isLoading={isLoading}
           llmProvider={llmProvider}
           onBack={handleBackToProducts}
+          sourceMetadata={sourceMetadata}
         />
       </div>
     </div>

@@ -1,7 +1,20 @@
+import type { PageContent } from './parser'
+
 export interface ChunkOptions {
   chunkSize: number
   chunkOverlap: number
   separators?: string[]
+}
+
+export interface ChunkWithPageInfo {
+  content: string
+  pageNumbers: number[]
+  primaryPage: number
+  searchText: string
+}
+
+export interface ChunkWithPagesOptions extends ChunkOptions {
+  pages: PageContent[]
 }
 
 const defaultSeparators = ['\n\n', '\n', '. ', ' ', '']
@@ -101,4 +114,71 @@ function splitByCharacters(
 export function estimateTokens(text: string): number {
   // Rough estimation: ~4 characters per token
   return Math.ceil(text.length / 4)
+}
+
+export function chunkTextWithPages(
+  text: string,
+  options: ChunkWithPagesOptions
+): ChunkWithPageInfo[] {
+  const { pages, chunkSize, chunkOverlap, separators = defaultSeparators } = options
+
+  // First, get the raw chunks using existing chunking logic
+  const rawChunks = chunkText(text, { chunkSize, chunkOverlap, separators })
+
+  // Track position in the full text
+  let searchStartPos = 0
+
+  return rawChunks.map((chunkContent) => {
+    // Find where this chunk starts in the full text
+    const chunkStartInText = text.indexOf(chunkContent, searchStartPos)
+    const chunkEndInText = chunkStartInText + chunkContent.length
+
+    // Update search position for next chunk (accounting for overlap)
+    if (chunkStartInText !== -1) {
+      searchStartPos = Math.max(searchStartPos, chunkStartInText + 1)
+    }
+
+    // Determine which pages this chunk spans
+    const pageNumbers: number[] = []
+
+    for (const page of pages) {
+      // Check if chunk overlaps with this page
+      // A chunk overlaps if its start is before the page end AND its end is after the page start
+      if (chunkStartInText < page.charEnd && chunkEndInText > page.charStart) {
+        pageNumbers.push(page.pageNumber)
+      }
+    }
+
+    // If no pages found (shouldn't happen), default to page 1
+    if (pageNumbers.length === 0) {
+      pageNumbers.push(1)
+    }
+
+    // Primary page is the one with the most content in this chunk
+    let primaryPage = pageNumbers[0]
+    let maxOverlap = 0
+
+    for (const pageNum of pageNumbers) {
+      const page = pages.find((p) => p.pageNumber === pageNum)
+      if (page) {
+        const overlapStart = Math.max(chunkStartInText, page.charStart)
+        const overlapEnd = Math.min(chunkEndInText, page.charEnd)
+        const overlap = overlapEnd - overlapStart
+        if (overlap > maxOverlap) {
+          maxOverlap = overlap
+          primaryPage = pageNum
+        }
+      }
+    }
+
+    // Extract search text (first 150 chars for text matching)
+    const searchText = chunkContent.slice(0, 150).trim()
+
+    return {
+      content: chunkContent,
+      pageNumbers,
+      primaryPage,
+      searchText
+    }
+  })
 }

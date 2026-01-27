@@ -152,6 +152,16 @@ export async function POST(request: NextRequest) {
 
     // Retrieve relevant document chunks for RAG
     let systemPrompt = customInstructions || defaultSystemPrompt
+    let sourceMetadata: Array<{
+      filename: string
+      url: string
+      pageInfo?: {
+        pageNumbers: number[]
+        primaryPage: number
+        searchText: string
+      }
+    }> = []
+
     try {
       console.log('RAG: Product name:', product?.name, '| Product ID:', productId)
       console.log('RAG: Query:', message.slice(0, 50))
@@ -163,8 +173,9 @@ export async function POST(request: NextRequest) {
 
         // Build context with source information
         const contextParts = chunks.map((c, index) => {
+          const pageRef = c.pageInfo?.primaryPage ? `#page=${c.pageInfo.primaryPage}` : ''
           const sourceInfo = c.document
-            ? `[Source ${index + 1}: ${c.document.filename}](${c.document.file_url})`
+            ? `[Source ${index + 1}: ${c.document.filename}](${c.document.file_url}${pageRef})`
             : `[Source ${index + 1}]`
           return `${sourceInfo}\n${c.chunk.content}`
         })
@@ -177,6 +188,15 @@ export async function POST(request: NextRequest) {
             index: index + 1,
             filename: c.document!.filename,
             url: c.document!.file_url,
+          }))
+
+        // Build source metadata with page info for frontend
+        sourceMetadata = chunks
+          .filter(c => c.document)
+          .map(c => ({
+            filename: c.document!.filename,
+            url: c.document!.file_url,
+            pageInfo: c.pageInfo
           }))
 
         systemPrompt = buildRAGPrompt(context, product?.name || 'this product', sources, customInstructions || undefined)
@@ -250,15 +270,21 @@ export async function POST(request: NextRequest) {
 
     const responseStream = stream.pipeThrough(transformStream)
 
-    return new NextResponse(responseStream, {
-      headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
-        'Transfer-Encoding': 'chunked',
-        'Cache-Control': 'no-store, max-age=0',
-        'X-Conversation-Id': activeConversationId,
-        'X-LLM-Provider': provider,
-      },
-    })
+    // Prepare headers with source metadata
+    const headers: Record<string, string> = {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Transfer-Encoding': 'chunked',
+      'Cache-Control': 'no-store, max-age=0',
+      'X-Conversation-Id': activeConversationId,
+      'X-LLM-Provider': provider,
+    }
+
+    // Add source metadata if available (URL-encoded JSON for header safety)
+    if (sourceMetadata.length > 0) {
+      headers['X-Source-Metadata'] = encodeURIComponent(JSON.stringify(sourceMetadata))
+    }
+
+    return new NextResponse(responseStream, { headers })
   } catch (error) {
     console.error('Chat error:', error)
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'

@@ -8,8 +8,15 @@ export interface DocumentSource {
   file_url: string
 }
 
+export interface PageInfo {
+  pageNumbers: number[]
+  primaryPage: number
+  searchText: string
+}
+
 export interface ChunkWithSource extends ChunkWithScore {
   document?: DocumentSource
+  pageInfo?: PageInfo
 }
 
 export async function retrieveRelevantChunks(
@@ -64,18 +71,31 @@ export async function retrieveRelevantChunks(
     (documents || []).map((doc: any) => [doc.id, doc])
   )
 
-  return (data || []).map((item: any) => ({
-    chunk: {
-      id: item.id,
-      document_id: item.document_id,
-      content: item.content,
-      embedding: [],
-      chunk_index: item.chunk_index,
-      metadata: item.metadata,
-    } as DocumentChunk,
-    score: item.similarity,
-    document: documentMap.get(item.document_id),
-  }))
+  return (data || []).map((item: any) => {
+    // Extract page info from metadata if available
+    const metadata = item.metadata || {}
+    const pageInfo: PageInfo | undefined = metadata.page_numbers
+      ? {
+          pageNumbers: metadata.page_numbers,
+          primaryPage: metadata.primary_page || metadata.page_numbers[0] || 1,
+          searchText: metadata.search_text || item.content?.slice(0, 150) || ''
+        }
+      : undefined
+
+    return {
+      chunk: {
+        id: item.id,
+        document_id: item.document_id,
+        content: item.content,
+        embedding: [],
+        chunk_index: item.chunk_index,
+        metadata: item.metadata,
+      } as DocumentChunk,
+      score: item.similarity,
+      document: documentMap.get(item.document_id),
+      pageInfo
+    }
+  })
 }
 
 async function fallbackTextSearch(
@@ -133,7 +153,15 @@ async function fallbackTextSearch(
         const content = chunk.content.toLowerCase()
         const matchCount = keywords.filter((k) => content.includes(k)).length
         const score = matchCount / keywords.length
-        return { chunk, score, document: documentMap.get(chunk.document_id) }
+        const metadata = chunk.metadata || {}
+        const pageInfo: PageInfo | undefined = metadata.page_numbers
+          ? {
+              pageNumbers: metadata.page_numbers,
+              primaryPage: metadata.primary_page || metadata.page_numbers[0] || 1,
+              searchText: metadata.search_text || chunk.content?.slice(0, 150) || ''
+            }
+          : undefined
+        return { chunk, score, document: documentMap.get(chunk.document_id), pageInfo }
       })
       .filter((item) => item.score > 0)
       .sort((a, b) => b.score - a.score)
@@ -161,10 +189,19 @@ async function fallbackTextSearch(
       const content = chunk.content.toLowerCase()
       const matchCount = keywords.filter((k) => content.includes(k)).length
       const score = matchCount / keywords.length
+      const metadata = chunk.metadata || {}
+      const pageInfo: PageInfo | undefined = metadata.page_numbers
+        ? {
+            pageNumbers: metadata.page_numbers,
+            primaryPage: metadata.primary_page || metadata.page_numbers[0] || 1,
+            searchText: metadata.search_text || chunk.content?.slice(0, 150) || ''
+          }
+        : undefined
       return {
         chunk,
         score,
         document: documentMap.get(chunk.document_id),
+        pageInfo
       }
     })
     .filter((item) => item.score > 0)
