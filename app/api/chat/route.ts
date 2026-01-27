@@ -194,9 +194,24 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { stream } = await streamResponse(messages, systemPrompt, {
-      provider,
-    })
+    console.log('LLM: Sending request to provider:', provider)
+    console.log('LLM: System prompt length:', systemPrompt.length)
+    console.log('LLM: Messages count:', messages.length)
+
+    let streamResult
+    try {
+      streamResult = await streamResponse(messages, systemPrompt, {
+        provider,
+      })
+    } catch (llmError) {
+      console.error('LLM stream error:', llmError)
+      return NextResponse.json(
+        { error: `LLM failed: ${llmError instanceof Error ? llmError.message : 'Unknown error'}` },
+        { status: 500 }
+      )
+    }
+
+    const { stream } = streamResult
 
     // Create a transform stream to accumulate the response
     let fullResponse = ''
