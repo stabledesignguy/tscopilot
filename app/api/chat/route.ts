@@ -6,6 +6,7 @@ import {
   buildRAGPrompt,
   defaultSystemPrompt,
   isProviderConfigured,
+  getSystemInstructions,
 } from '@/lib/llm'
 import { retrieveRelevantChunks } from '@/lib/rag/retriever'
 import type { LLMProvider, LLMMessage } from '@/types'
@@ -146,8 +147,11 @@ export async function POST(request: NextRequest) {
           content: m.content,
         })) || []
 
+    // Fetch custom system instructions from database (returns null if using default)
+    const customInstructions = await getSystemInstructions(supabase)
+
     // Retrieve relevant document chunks for RAG
-    let systemPrompt = defaultSystemPrompt
+    let systemPrompt = customInstructions || defaultSystemPrompt
     try {
       console.log('RAG: Product name:', product?.name, '| Product ID:', productId)
       console.log('RAG: Query:', message.slice(0, 50))
@@ -175,7 +179,7 @@ export async function POST(request: NextRequest) {
             url: c.document!.file_url,
           }))
 
-        systemPrompt = buildRAGPrompt(context, product?.name || 'this product', sources)
+        systemPrompt = buildRAGPrompt(context, product?.name || 'this product', sources, customInstructions || undefined)
         console.log('RAG: Using RAG prompt with context length:', context.length)
       } else {
         console.log('RAG: No chunks found, using default prompt')
