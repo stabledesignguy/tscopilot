@@ -174,6 +174,8 @@ export interface DocumentSource {
   index: number
   filename: string
   url: string
+  pageNumbers?: number[]
+  primaryPage?: number
 }
 
 export async function getSystemInstructions(supabase: any): Promise<string | null> {
@@ -203,13 +205,19 @@ export function buildRAGPrompt(
   sources: DocumentSource[] = [],
   customInstructions?: string
 ): string {
-  // Build sources reference section
+  // Build sources reference section with page numbers
   const sourcesSection = sources.length > 0
     ? `
 ## Available Source Documents
-The following source documents are available for citation. Use the exact URLs provided when creating footnote links:
+The following source documents are available for citation. Use the exact URLs and page numbers provided when creating footnote links:
 
-${sources.map(s => `- **[${s.index}]** ${s.filename}: ${s.url}`).join('\n')}
+${sources.map(s => {
+  const pageInfo = s.pageNumbers && s.pageNumbers.length > 0
+    ? `, Page${s.pageNumbers.length > 1 ? 's' : ''} ${s.pageNumbers.join(', ')}`
+    : ''
+  const pageHash = s.primaryPage ? `#page=${s.primaryPage}` : ''
+  return `- **[${s.index}]** ${s.filename}${pageInfo}: ${s.url}${pageHash}`
+}).join('\n')}
 `
     : ''
 
