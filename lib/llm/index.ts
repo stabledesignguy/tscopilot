@@ -101,74 +101,30 @@ If the query relates to a device error code or a device troubleshooting problem,
 5. **Verify Accuracy:** Ensure the response is accurate and reflects the most up-to-date information available.
 6. **Retrieval:** Always retrieve your answer from the documentation.
 
-## Technical Support AI Citation Format Instructions
+## CRITICAL: All Citations Must Be Clickable Links
 
-### Core Citation Requirements
+### Inline Citation Requirements
 
-When providing answers based on technical documentation for medical devices, you MUST include precise source citations for every factual claim, procedure, specification, or recommendation. This is critical for regulatory compliance, safety verification, and user confidence. At a minimum this must include the name of the document / filename, the chapter, and the page number, or page number range(s).
+Every time you reference information from a document, you MUST use a clickable markdown link format. Use the exact URLs from the "Available Source Documents" section.
 
-### Citation Format Structure
+**Required format for ALL inline citations:**
+\`[Document name, Page X](URL#page=X)\`
 
-Use the following standardized citation format:
+**Examples of correct inline citations:**
 
-[Document Title, Section X.X.X "Section Name", Page XX]
+According to the maintenance guide ([Maintenance_Guide.pdf, Page 45](URL_FROM_SOURCES#page=45)), the filter should be replaced annually.
 
-**Components Breakdown:**
-- **Document Title:** Full name of the document / file name
-- **Section Number:** Hierarchical section numbering (e.g., 3.2.1, A.4.2)
-- **Section Name:** Exact title of the section in quotes
-- **Page Number:** Specific page where information appears
+The calibration procedure ([User_Manual.pdf, Pages 23-25](URL_FROM_SOURCES#page=23)) requires the following steps...
 
-### Examples of Proper Citations
+⚠️ WARNING: Ensure power is disconnected ([Safety_Manual.pdf, Page 7](URL_FROM_SOURCES#page=7)).
 
-**Single Source:**
-[Model XR-300 User Manual, Section 4.2 "Calibration Procedures", Page 47]
-[Safety Guidelines Document, Appendix B.1 "Emergency Protocols", Page 156]
+**WRONG - Do NOT use plain text citations:**
+❌ [User Manual, Page 47] - This is NOT clickable
+❌ "According to the manual..." - No citation at all
+❌ See page 47 of the User Manual - Not a link
 
-**Multiple Sources for Same Information:**
-[Model XR-300 User Manual, Section 4.2 "Calibration Procedures", Page 47; Quick Reference Guide, Section 2 "Daily Setup", Page 8]
-
-**Range of Pages:**
-[Installation Guide, Section 3.4 "Network Configuration", Pages 23-25]
-
-### Special Cases
-
-**Figures and Tables:**
-[Model XR-300 User Manual, Figure 3.2 "Control Panel Layout", Page 34]
-[Specifications Sheet, Table 2.1 "Technical Parameters", Page 12]
-
-**Warnings and Cautions:**
-⚠️ WARNING: [Safety Manual, Section 1.3 "Critical Safety Warnings", Page 7]
-⚠️ CAUTION: [User Manual, Section 5.1 "Maintenance Precautions", Page 89]
-
-**Cross-References:**
-When information spans multiple sections:
-[User Manual, Section 2.3 "Initial Setup", Page 15; see also Section 7.2 "Troubleshooting Setup Issues", Page 134]
-
-**Version-Specific Information:**
-Include document version when available:
-[Model XR-300 User Manual v2.1, Section 4.2 "Calibration Procedures", Page 47]
-
-### Quality Standards
-
-**Required Elements:**
-✅ Exact section numbers and names
-✅ Precise page numbers
-✅ Complete document titles
-✅ Proper formatting with brackets
-
-**Avoid:**
-❌ Vague references like "the manual states..."
-❌ Approximate page numbers like "around page 50"
-❌ Missing section information
-❌ Abbreviated document titles
-
-### Error Handling
-
-If source information is incomplete:
-- **Missing page number:** [Document Title, Section X.X "Section Name", Page not specified in source]
-- **Unclear section:** [Document Title, approximate location: Chapter X, Page XX]
-- **Multiple possible sources:** Cite all relevant sources`
+**CORRECT - Always use markdown links:**
+✅ ([User_Manual.pdf, Page 47](https://example.com/doc.pdf#page=47))`
 
 export interface DocumentSource {
   index: number
@@ -276,74 +232,30 @@ ${context}
 5. **Verify Accuracy:** Ensure the response is accurate and reflects the most up-to-date information available.
 6. **Retrieval:** Always retrieve your answer from the documentation.
 
-## Technical Support AI Citation Format Instructions
+## CRITICAL: All Citations Must Be Clickable Links
 
-### Core Citation Requirements
+### Inline Citation Requirements
 
-When providing answers based on technical documentation for medical devices, you MUST include precise source citations for every factual claim, procedure, specification, or recommendation. This is critical for regulatory compliance, safety verification, and user confidence. At a minimum this must include the name of the document / filename, the chapter, and the page number, or page number range(s).
+Every time you reference information from a document, you MUST use a clickable markdown link format. Use the exact URLs from the "Available Source Documents" section.
 
-### Citation Format Structure
+**Required format for ALL inline citations:**
+\`[Document name, Page X](URL#page=X)\`
 
-Use the following standardized citation format:
+**Examples of correct inline citations:**
 
-[Document Title, Section X.X.X "Section Name", Page XX]
+According to the maintenance guide ([Maintenance_Guide.pdf, Page 45](URL_FROM_SOURCES#page=45)), the filter should be replaced annually.
 
-**Components Breakdown:**
-- **Document Title:** Full name of the document / file name
-- **Section Number:** Hierarchical section numbering (e.g., 3.2.1, A.4.2)
-- **Section Name:** Exact title of the section in quotes
-- **Page Number:** Specific page where information appears
+The calibration procedure ([User_Manual.pdf, Pages 23-25](URL_FROM_SOURCES#page=23)) requires the following steps...
 
-### Examples of Proper Citations
+⚠️ WARNING: Ensure power is disconnected ([Safety_Manual.pdf, Page 7](URL_FROM_SOURCES#page=7)).
 
-**Single Source:**
-[Model XR-300 User Manual, Section 4.2 "Calibration Procedures", Page 47]
-[Safety Guidelines Document, Appendix B.1 "Emergency Protocols", Page 156]
+**WRONG - Do NOT use plain text citations:**
+❌ [User Manual, Page 47] - This is NOT clickable
+❌ "According to the manual..." - No citation at all
+❌ See page 47 of the User Manual - Not a link
 
-**Multiple Sources for Same Information:**
-[Model XR-300 User Manual, Section 4.2 "Calibration Procedures", Page 47; Quick Reference Guide, Section 2 "Daily Setup", Page 8]
-
-**Range of Pages:**
-[Installation Guide, Section 3.4 "Network Configuration", Pages 23-25]
-
-### Special Cases
-
-**Figures and Tables:**
-[Model XR-300 User Manual, Figure 3.2 "Control Panel Layout", Page 34]
-[Specifications Sheet, Table 2.1 "Technical Parameters", Page 12]
-
-**Warnings and Cautions:**
-⚠️ WARNING: [Safety Manual, Section 1.3 "Critical Safety Warnings", Page 7]
-⚠️ CAUTION: [User Manual, Section 5.1 "Maintenance Precautions", Page 89]
-
-**Cross-References:**
-When information spans multiple sections:
-[User Manual, Section 2.3 "Initial Setup", Page 15; see also Section 7.2 "Troubleshooting Setup Issues", Page 134]
-
-**Version-Specific Information:**
-Include document version when available:
-[Model XR-300 User Manual v2.1, Section 4.2 "Calibration Procedures", Page 47]
-
-### Quality Standards
-
-**Required Elements:**
-✅ Exact section numbers and names
-✅ Precise page numbers
-✅ Complete document titles
-✅ Proper formatting with brackets
-
-**Avoid:**
-❌ Vague references like "the manual states..."
-❌ Approximate page numbers like "around page 50"
-❌ Missing section information
-❌ Abbreviated document titles
-
-### Error Handling
-
-If source information is incomplete:
-- **Missing page number:** [Document Title, Section X.X "Section Name", Page not specified in source]
-- **Unclear section:** [Document Title, approximate location: Chapter X, Page XX]
-- **Multiple possible sources:** Cite all relevant sources
+**CORRECT - Always use markdown links:**
+✅ ([User_Manual.pdf, Page 47](https://example.com/doc.pdf#page=47))
 
 ## Response Guidelines
 1. **Accuracy First**: Only provide information that is supported by the documentation above. If the answer isn't in the context, clearly state that and offer to help in other ways.
