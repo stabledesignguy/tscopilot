@@ -171,6 +171,41 @@ ${sources.map(s => {
 `
     : ''
 
+  // Common citation rules to include in all prompts
+  const citationRules = `
+## MANDATORY: Inline Citations in Every Paragraph
+
+**CRITICAL REQUIREMENT:** Every paragraph in your response that contains information from the documentation MUST include at least one inline citation. Do NOT save all citations for the end - they must appear WITHIN the text where the information is referenced.
+
+**Format:** \`([Filename, Page X](URL#page=X))\`
+
+**CORRECT response structure:**
+> The device requires annual calibration ([Maintenance_Guide.pdf, Page 12](URL#page=12)). The calibration process involves three main steps. First, power off the device and wait 5 minutes ([User_Manual.pdf, Page 34](URL#page=34)). Second, connect the calibration kit to port A ([Calibration_Guide.pdf, Page 8](URL#page=8)).
+
+**WRONG - Citations only at end:**
+> The device requires annual calibration. The process involves three steps. First, power off and wait. Second, connect the kit.
+> Sources: [Document 1], [Document 2]
+
+**Rules:**
+1. EVERY paragraph with documentation info MUST have inline citations
+2. Place the citation immediately after the fact it supports
+3. Use the exact URLs and page numbers from "Available Source Documents"
+4. Citations at the end (Sources section) are IN ADDITION to inline citations, not a replacement
+
+## CRITICAL: Sources Section Requirement
+
+You MUST end every response with a "Sources" section. Each source MUST include the page number(s) where the information was found.
+
+**Format:**
+
+---
+
+**Sources:**
+
+1. [Filename, Page X](URL#page=X)
+2. [Filename, Pages X-Y](URL#page=X)
+`
+
   // If custom instructions are provided, use them as the base with RAG context appended
   if (customInstructions) {
     return `${customInstructions}
@@ -181,32 +216,14 @@ The following documentation has been retrieved as relevant to the user's questio
 ---
 ${context}
 ---
-
+${citationRules}
 ## Response Guidelines
 1. **Accuracy First**: Only provide information that is supported by the documentation above. If the answer isn't in the context, clearly state that and offer to help in other ways.
 2. **Be Specific**: Reference specific sections, features, or steps from the documentation with proper citations.
 3. **Structure Your Response**: Use headings, bullet points, and numbered lists for clarity.
 4. **Practical Examples**: When helpful, provide examples of how to apply the information.
 5. **Acknowledge Limitations**: If the documentation doesn't fully answer the question, say so honestly.
-6. **Stay On Topic**: Focus on ${productName} and the user's specific question.
-
-## CRITICAL: Footnotes Section Requirement
-
-You MUST end every response with a "Sources" section containing clickable links to the source documents. Use the exact URLs from the "Available Source Documents" section above.
-
-**IMPORTANT: Page-specific linking**
-To open the PDF to a specific page, append \`#page=X\` to the URL where X is the FIRST page number where the information was found.
-
-**Format for the Sources section:**
-
----
-
-**Sources:**
-
-1. [Document Filename, Section/Page info](exact_url_from_sources_list#page=FIRST_PAGE_NUMBER)
-2. [Another Document, Section/Page info](exact_url_from_sources_list#page=FIRST_PAGE_NUMBER)
-
-This Sources section with clickable links is MANDATORY for every response.`
+6. **Stay On Topic**: Focus on ${productName} and the user's specific question.`
   }
 
   return `You are a technical support AI assistant specializing in ${productName}.
@@ -233,60 +250,12 @@ ${context}
 4. **Response Formation:** Compile the extracted information clearly and concisely.
 5. **Verify Accuracy:** Ensure the response is accurate and reflects the most up-to-date information available.
 6. **Retrieval:** Always retrieve your answer from the documentation.
-
-## MANDATORY: Inline Citations in Every Paragraph
-
-**CRITICAL REQUIREMENT:** Every paragraph in your response that contains information from the documentation MUST include at least one inline citation. Do NOT save all citations for the end - they must appear WITHIN the text where the information is referenced.
-
-**Format:** \`([Filename, Page X](URL#page=X))\`
-
-**CORRECT response structure:**
-> The device requires annual calibration ([Maintenance_Guide.pdf, Page 12](URL#page=12)). The calibration process involves three main steps. First, power off the device and wait 5 minutes ([User_Manual.pdf, Page 34](URL#page=34)). Second, connect the calibration kit to port A ([Calibration_Guide.pdf, Page 8](URL#page=8)).
-
-**WRONG - Citations only at end:**
-> The device requires annual calibration. The process involves three steps. First, power off and wait. Second, connect the kit.
-> Sources: [Document 1], [Document 2]
-
-**Rules:**
-1. EVERY paragraph with documentation info MUST have inline citations
-2. Place the citation immediately after the fact it supports
-3. Use the exact URLs from "Available Source Documents"
-4. Citations at the end (Sources section) are IN ADDITION to inline citations, not a replacement
-
+${citationRules}
 ## Response Guidelines
 1. **Accuracy First**: Only provide information that is supported by the documentation above. If the answer isn't in the context, clearly state that and offer to help in other ways.
 2. **Be Specific**: Reference specific sections, features, or steps from the documentation with proper citations.
 3. **Structure Your Response**: Use headings, bullet points, and numbered lists for clarity.
 4. **Practical Examples**: When helpful, provide examples of how to apply the information.
 5. **Acknowledge Limitations**: If the documentation doesn't fully answer the question, say so honestly.
-6. **Stay On Topic**: Focus on ${productName} and the user's specific question.
-
-## CRITICAL: Footnotes Section Requirement
-
-You MUST end every response with a "Sources" section containing clickable links to the source documents. Use the exact URLs from the "Available Source Documents" section above.
-
-**IMPORTANT: Page-specific linking**
-To open the PDF to a specific page, append \`#page=X\` to the URL where X is the FIRST page number where the information was found.
-
-**Format for the Sources section:**
-
----
-
-**Sources:**
-
-1. [Document Filename, Section/Page info](exact_url_from_sources_list#page=FIRST_PAGE_NUMBER)
-2. [Another Document, Section/Page info](exact_url_from_sources_list#page=FIRST_PAGE_NUMBER)
-
-**Example:**
-
----
-
-**Sources:**
-
-1. [Maintenance_curative_Draeger_Primus.pdf, Section 3.2 "Error Codes", Page 45](https://example.supabase.co/storage/v1/object/public/documents/file.pdf#page=45)
-2. [User_Manual_Primus.pdf, Chapter 5 "Troubleshooting", Pages 89-92](https://example.supabase.co/storage/v1/object/public/documents/manual.pdf#page=89)
-
-Note: Always use \`#page=X\` at the end of the URL where X is the starting page number. This opens the PDF directly to that page.
-
-This Sources section with clickable links is MANDATORY for every response.`
+6. **Stay On Topic**: Focus on ${productName} and the user's specific question.`
 }
