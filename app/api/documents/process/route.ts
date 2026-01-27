@@ -56,11 +56,14 @@ export async function POST(request: NextRequest) {
       })
 
       // Generate embeddings and store chunks with page metadata
+      console.log(`Processing: Creating ${chunksWithPages.length} chunks for document "${document.filename}"`)
+      console.log(`Processing: Product ID: ${document.product_id}`)
+
       for (let i = 0; i < chunksWithPages.length; i++) {
         const chunk = chunksWithPages[i]
         const embedding = await generateEmbeddings(chunk.content)
 
-        await (supabase.from('document_chunks') as any).insert({
+        const { error: insertError } = await (supabase.from('document_chunks') as any).insert({
           document_id: documentId,
           product_id: document.product_id,
           content: chunk.content,
@@ -73,7 +76,13 @@ export async function POST(request: NextRequest) {
             search_text: chunk.searchText,
           },
         })
+
+        if (insertError) {
+          console.error(`Processing: Error inserting chunk ${i}:`, insertError)
+        }
       }
+
+      console.log(`Processing: Successfully created ${chunksWithPages.length} chunks`)
 
       // Update status to completed
       await supabase

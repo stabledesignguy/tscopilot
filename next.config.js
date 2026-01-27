@@ -17,6 +17,11 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  webpack: (config) => {
+    // Fix for react-pdf canvas dependency
+    config.resolve.alias.canvas = false
+    return config
+  },
 }
 
 module.exports = nextConfig

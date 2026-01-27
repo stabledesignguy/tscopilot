@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useState } from 'react'
 
 interface PDFHighlightLayerProps {
   searchText: string
@@ -13,57 +13,8 @@ function normalizeText(text: string): string {
   return text
     .toLowerCase()
     .replace(/\s+/g, ' ')
-    .replace(/[^\w\s]/g, '')
+    .replace(/[^\w\sàâäéèêëïîôùûüç]/g, '') // Keep French accented chars
     .trim()
-}
-
-// Find text matches in the text layer
-function findTextMatches(
-  textLayer: HTMLElement,
-  searchText: string
-): HTMLElement[] {
-  const normalizedSearch = normalizeText(searchText)
-  if (!normalizedSearch || normalizedSearch.length < 10) return []
-
-  const textSpans = textLayer.querySelectorAll('span')
-  const matches: HTMLElement[] = []
-
-  // Build text content map from spans
-  let fullText = ''
-  const spanMap: Array<{ span: HTMLElement; start: number; end: number }> = []
-
-  textSpans.forEach((span) => {
-    const start = fullText.length
-    const spanText = span.textContent || ''
-    fullText += spanText + ' '
-    spanMap.push({ span: span as HTMLElement, start, end: fullText.length })
-  })
-
-  const normalizedFull = normalizeText(fullText)
-
-  // Try to find the search text in the normalized full text
-  // Use a sliding window approach for fuzzy matching
-  const searchWords = normalizedSearch.split(' ').filter(w => w.length > 2)
-  if (searchWords.length === 0) return []
-
-  // Find spans containing search words
-  const matchedSpans = new Set<HTMLElement>()
-
-  searchWords.slice(0, 5).forEach((word) => {
-    spanMap.forEach(({ span }) => {
-      const spanText = normalizeText(span.textContent || '')
-      if (spanText.includes(word)) {
-        matchedSpans.add(span)
-      }
-    })
-  })
-
-  // If we have enough word matches, consider it a match
-  if (matchedSpans.size >= Math.min(3, searchWords.length)) {
-    matches.push(...matchedSpans)
-  }
-
-  return matches
 }
 
 export function PDFHighlightLayer({
@@ -72,6 +23,7 @@ export function PDFHighlightLayer({
   containerRef
 }: PDFHighlightLayerProps) {
   const highlightsRef = useRef<HTMLDivElement[]>([])
+  const [attempts, setAttempts] = useState(0)
 
   const clearHighlights = useCallback(() => {
     highlightsRef.current.forEach((el) => el.remove())
@@ -79,22 +31,72 @@ export function PDFHighlightLayer({
   }, [])
 
   const applyHighlights = useCallback(() => {
-    if (!containerRef.current || !searchText) return
+    if (!containerRef.current || !searchText) {
+      console.log('Highlight: No container or search text')
+      return false
+    }
 
     clearHighlights()
 
-    // Find the text layer for the current page
-    const textLayer = containerRef.current.querySelector(
-      `.react-pdf__Page[data-page-number="${pageNumber}"] .react-pdf__Page__textContent`
-    ) as HTMLElement
+    // Try multiple selectors for the text layer
+    const selectors = [
+      `.react-pdf__Page__textContent`,
+      `.textLayer`,
+      `[data-page-number="${pageNumber}"] .react-pdf__Page__textContent`,
+      `.react-pdf__Page .react-pdf__Page__textContent`
+    ]
 
-    if (!textLayer) return
+    let textLayer: HTMLElement | null = null
+    for (const selector of selectors) {
+      textLayer = containerRef.current.querySelector(selector) as HTMLElement
+      if (textLayer) {
+        console.log('Highlight: Found text layer with selector:', selector)
+        break
+      }
+    }
 
-    const matches = findTextMatches(textLayer, searchText)
+    if (!textLayer) {
+      console.log('Highlight: Text layer not found, will retry...')
+      return false
+    }
 
-    matches.forEach((span) => {
+    // Get all text spans
+    const textSpans = textLayer.querySelectorAll('span')
+    console.log('Highlight: Found', textSpans.length, 'text spans')
+
+    if (textSpans.length === 0) {
+      console.log('Highlight: No spans found, will retry...')
+      return false
+    }
+
+    // Normalize search text and extract words
+    const normalizedSearch = normalizeText(searchText)
+    const searchWords = normalizedSearch.split(' ').filter(w => w.length > 2)
+    console.log('Highlight: Searching for words:', searchWords.slice(0, 5))
+
+    // Find spans containing search words
+    const matchedSpans: HTMLElement[] = []
+
+    textSpans.forEach((span) => {
+      const spanText = normalizeText(span.textContent || '')
+      if (!spanText) return
+
+      // Check if this span contains any of the search words
+      const hasMatch = searchWords.slice(0, 8).some(word => spanText.includes(word))
+      if (hasMatch) {
+        matchedSpans.push(span as HTMLElement)
+      }
+    })
+
+    console.log('Highlight: Found', matchedSpans.length, 'matching spans')
+
+    // Create highlight overlays
+    matchedSpans.forEach((span) => {
       const rect = span.getBoundingClientRect()
       const containerRect = containerRef.current!.getBoundingClientRect()
+
+      // Skip if span has no size
+      if (rect.width === 0 || rect.height === 0) return
 
       const highlight = document.createElement('div')
       highlight.className = 'pdf-highlight'
@@ -104,31 +106,49 @@ export function PDFHighlightLayer({
         top: ${rect.top - containerRect.top + containerRef.current!.scrollTop}px;
         width: ${rect.width}px;
         height: ${rect.height}px;
-        background-color: rgba(255, 235, 59, 0.4);
+        background-color: rgba(255, 235, 59, 0.5);
         pointer-events: none;
         z-index: 10;
         border-radius: 2px;
+        mix-blend-mode: multiply;
       `
 
       containerRef.current!.appendChild(highlight)
       highlightsRef.current.push(highlight)
     })
+
+    console.log('Highlight: Created', highlightsRef.current.length, 'highlights')
+    return highlightsRef.current.length > 0
   }, [searchText, pageNumber, containerRef, clearHighlights])
 
   useEffect(() => {
-    // Apply highlights after a short delay to ensure text layer is rendered
-    const timer = setTimeout(applyHighlights, 500)
+    // Try multiple times with increasing delays
+    const delays = [100, 300, 600, 1000, 2000]
+    let currentAttempt = 0
+    let timerId: NodeJS.Timeout
+
+    const tryHighlight = () => {
+      const success = applyHighlights()
+      if (!success && currentAttempt < delays.length - 1) {
+        currentAttempt++
+        setAttempts(currentAttempt)
+        timerId = setTimeout(tryHighlight, delays[currentAttempt])
+      }
+    }
+
+    timerId = setTimeout(tryHighlight, delays[0])
+
     return () => {
-      clearTimeout(timer)
+      clearTimeout(timerId)
       clearHighlights()
     }
-  }, [applyHighlights, clearHighlights])
+  }, [applyHighlights, clearHighlights, searchText, pageNumber])
 
   // Re-apply on resize
   useEffect(() => {
     const handleResize = () => {
       clearHighlights()
-      setTimeout(applyHighlights, 100)
+      setTimeout(applyHighlights, 200)
     }
 
     window.addEventListener('resize', handleResize)
