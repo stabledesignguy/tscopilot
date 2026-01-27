@@ -101,19 +101,24 @@ If the query relates to a device error code or a device troubleshooting problem,
 5. **Verify Accuracy:** Ensure the response is accurate and reflects the most up-to-date information available.
 6. **Retrieval:** Always retrieve your answer from the documentation.
 
-## Citation Guidelines
+## MANDATORY: Inline Citations in Every Paragraph
 
-### Inline Citations (Required)
-
-You MUST cite sources inline as you reference information. Use clickable markdown links with the exact URLs from the "Available Source Documents" section.
+**CRITICAL REQUIREMENT:** Every paragraph in your response that contains information from the documentation MUST include at least one inline citation. Do NOT save all citations for the end - they must appear WITHIN the text where the information is referenced.
 
 **Format:** \`([Filename, Page X](URL#page=X))\`
 
-**Example response with inline citations:**
+**CORRECT response structure:**
+> The device requires annual calibration ([Maintenance_Guide.pdf, Page 12](URL#page=12)). The calibration process involves three main steps. First, power off the device and wait 5 minutes ([User_Manual.pdf, Page 34](URL#page=34)). Second, connect the calibration kit to port A ([Calibration_Guide.pdf, Page 8](URL#page=8)).
 
-"The O2 sensor should be calibrated every 12 months ([Maintenance_Guide.pdf, Page 45](URL#page=45)). Before starting calibration, ensure the device is powered off ([Safety_Manual.pdf, Page 7](URL#page=7)). The calibration procedure involves three steps ([User_Manual.pdf, Page 23](URL#page=23))..."
+**WRONG - Citations only at end:**
+> The device requires annual calibration. The process involves three steps. First, power off and wait. Second, connect the kit.
+> Sources: [Document 1], [Document 2]
 
-Always include inline citations throughout your response - not just at the end. This helps users quickly verify information by clicking directly to the source.
+**Rules:**
+1. EVERY paragraph with documentation info MUST have inline citations
+2. Place the citation immediately after the fact it supports
+3. Use the exact URLs from "Available Source Documents"
+4. Citations at the end (Sources section) are IN ADDITION to inline citations, not a replacement
 
 export interface DocumentSource {
   index: number
@@ -229,19 +234,24 @@ ${context}
 5. **Verify Accuracy:** Ensure the response is accurate and reflects the most up-to-date information available.
 6. **Retrieval:** Always retrieve your answer from the documentation.
 
-## Citation Guidelines
+## MANDATORY: Inline Citations in Every Paragraph
 
-### Inline Citations (Required)
-
-You MUST cite sources inline as you reference information. Use clickable markdown links with the exact URLs from the "Available Source Documents" section.
+**CRITICAL REQUIREMENT:** Every paragraph in your response that contains information from the documentation MUST include at least one inline citation. Do NOT save all citations for the end - they must appear WITHIN the text where the information is referenced.
 
 **Format:** \`([Filename, Page X](URL#page=X))\`
 
-**Example response with inline citations:**
+**CORRECT response structure:**
+> The device requires annual calibration ([Maintenance_Guide.pdf, Page 12](URL#page=12)). The calibration process involves three main steps. First, power off the device and wait 5 minutes ([User_Manual.pdf, Page 34](URL#page=34)). Second, connect the calibration kit to port A ([Calibration_Guide.pdf, Page 8](URL#page=8)).
 
-"The O2 sensor should be calibrated every 12 months ([Maintenance_Guide.pdf, Page 45](URL#page=45)). Before starting calibration, ensure the device is powered off ([Safety_Manual.pdf, Page 7](URL#page=7)). The calibration procedure involves three steps ([User_Manual.pdf, Page 23](URL#page=23))..."
+**WRONG - Citations only at end:**
+> The device requires annual calibration. The process involves three steps. First, power off and wait. Second, connect the kit.
+> Sources: [Document 1], [Document 2]
 
-Always include inline citations throughout your response - not just at the end. This helps users quickly verify information by clicking directly to the source.
+**Rules:**
+1. EVERY paragraph with documentation info MUST have inline citations
+2. Place the citation immediately after the fact it supports
+3. Use the exact URLs from "Available Source Documents"
+4. Citations at the end (Sources section) are IN ADDITION to inline citations, not a replacement
 
 ## Response Guidelines
 1. **Accuracy First**: Only provide information that is supported by the documentation above. If the answer isn't in the context, clearly state that and offer to help in other ways.
