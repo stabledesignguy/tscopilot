@@ -101,24 +101,9 @@ If the query relates to a device error code or a device troubleshooting problem,
 5. **Verify Accuracy:** Ensure the response is accurate and reflects the most up-to-date information available.
 6. **Retrieval:** Always retrieve your answer from the documentation.
 
-## MANDATORY: Inline Citations in Every Paragraph
+## Sources Section
 
-**CRITICAL REQUIREMENT:** Every paragraph in your response that contains information from the documentation MUST include at least one inline citation. Do NOT save all citations for the end - they must appear WITHIN the text where the information is referenced.
-
-**Format:** \`([Filename, Page X](URL#page=X))\`
-
-**CORRECT response structure:**
-> The device requires annual calibration ([Maintenance_Guide.pdf, Page 12](URL#page=12)). The calibration process involves three main steps. First, power off the device and wait 5 minutes ([User_Manual.pdf, Page 34](URL#page=34)). Second, connect the calibration kit to port A ([Calibration_Guide.pdf, Page 8](URL#page=8)).
-
-**WRONG - Citations only at end:**
-> The device requires annual calibration. The process involves three steps. First, power off and wait. Second, connect the kit.
-> Sources: [Document 1], [Document 2]
-
-**Rules:**
-1. EVERY paragraph with documentation info MUST have inline citations
-2. Place the citation immediately after the fact it supports
-3. Use the exact URLs from "Available Source Documents"
-4. Citations at the end (Sources section) are IN ADDITION to inline citations, not a replacement`
+End every response with a "Sources" section listing the documents and page numbers you referenced.`
 
 export interface DocumentSource {
   index: number
@@ -171,30 +156,16 @@ ${sources.map(s => {
 `
     : ''
 
-  // Common citation rules to include in all prompts
+  // Citation rules for Sources section at end of response
   const citationRules = `
-## MANDATORY: Inline Citations in Every Paragraph
-
-**CRITICAL REQUIREMENT:** Every paragraph in your response that contains information from the documentation MUST include at least one inline citation. Do NOT save all citations for the end - they must appear WITHIN the text where the information is referenced.
-
-**Format:** \`([Filename, Page X](URL#page=X))\`
-
-**CORRECT response structure:**
-> The device requires annual calibration ([Maintenance_Guide.pdf, Page 12](URL#page=12)). The calibration process involves three main steps. First, power off the device and wait 5 minutes ([User_Manual.pdf, Page 34](URL#page=34)). Second, connect the calibration kit to port A ([Calibration_Guide.pdf, Page 8](URL#page=8)).
-
-**WRONG - Citations only at end:**
-> The device requires annual calibration. The process involves three steps. First, power off and wait. Second, connect the kit.
-> Sources: [Document 1], [Document 2]
-
-**Rules:**
-1. EVERY paragraph with documentation info MUST have inline citations
-2. Place the citation immediately after the fact it supports
-3. Use the exact URLs and page numbers from "Available Source Documents"
-4. Citations at the end (Sources section) are IN ADDITION to inline citations, not a replacement
-
 ## CRITICAL: Sources Section Requirement
 
-You MUST end every response with a "Sources" section. Each source MUST include the page number(s) where the information was found.
+You MUST end every response with a "Sources" section containing clickable links to the documents you referenced.
+
+**Requirements:**
+1. Use the exact URLs from "Available Source Documents" above
+2. Include the specific page number(s) where the information was found
+3. Append \`#page=X\` to each URL (where X is the page number)
 
 **Format:**
 
@@ -204,6 +175,15 @@ You MUST end every response with a "Sources" section. Each source MUST include t
 
 1. [Filename, Page X](URL#page=X)
 2. [Filename, Pages X-Y](URL#page=X)
+
+**Example:**
+
+---
+
+**Sources:**
+
+1. [Maintenance_Guide.pdf, Page 45](https://example.com/docs/maintenance.pdf#page=45)
+2. [User_Manual.pdf, Pages 12-15](https://example.com/docs/manual.pdf#page=12)
 `
 
   // If custom instructions are provided, use them as the base with RAG context appended
