@@ -176,7 +176,7 @@ export interface DocumentSource {
   url: string
 }
 
-export async function getSystemInstructions(supabase: any): Promise<string> {
+export async function getSystemInstructions(supabase: any): Promise<string | null> {
   try {
     const { data, error } = await supabase
       .from('system_instructions')
@@ -185,15 +185,15 @@ export async function getSystemInstructions(supabase: any): Promise<string> {
 
     if (error) {
       console.error('Error fetching system instructions:', error)
-      return defaultSystemPrompt
+      return null
     }
 
     // data is an array, get first item if exists
-    const instructions = data?.[0]?.instructions
-    return instructions || defaultSystemPrompt
+    // Return null if no custom instructions, so caller knows to use default RAG prompt
+    return data?.[0]?.instructions || null
   } catch (err) {
     console.error('Exception fetching system instructions:', err)
-    return defaultSystemPrompt
+    return null
   }
 }
 
