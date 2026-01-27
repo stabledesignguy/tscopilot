@@ -54,51 +54,74 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(results)
     }
 
-    // Step 2: Try vector search with different thresholds
+    // Step 2: Try vector search
     const serviceClient = await createServiceClient()
     const queryEmbedding = await generateEmbeddings(query)
     const embeddingString = `[${queryEmbedding.map(v => v.toFixed(9)).join(',')}]`
 
-    // Try multiple thresholds
-    const thresholds = [0.3, 0.2, 0.1, 0.0]
-    for (const threshold of thresholds) {
-      try {
-        const stepIndex = results.steps.length
-        results.steps.push({ step: stepIndex + 1, name: `Vector search (threshold=${threshold})`, status: 'starting' })
+    try {
+      results.steps.push({ step: 2, name: 'Vector search (threshold=0.3)', status: 'starting' })
 
-        const { data, error } = await serviceClient.rpc('match_documents', {
-          query_embedding: embeddingString,
-          match_threshold: threshold,
-          match_count: 5,
-          filter_product_id: productId,
-        })
+      const { data, error } = await serviceClient.rpc('match_documents', {
+        query_embedding: embeddingString,
+        match_threshold: 0.3,
+        match_count: 5,
+        filter_product_id: productId,
+      })
 
-        if (error) {
-          results.steps[stepIndex].status = 'failed'
-          results.steps[stepIndex].error = error.message
-        } else {
-          results.steps[stepIndex].status = 'success'
-          results.steps[stepIndex].results_count = data?.length || 0
-          if (data && data.length > 0) {
-            results.steps[stepIndex].results = data.map((r: any) => ({
-              id: r.id,
-              document_id: r.document_id,
-              similarity: r.similarity,
-              content_preview: r.content?.substring(0, 200) + '...'
-            }))
-            break // Found results, stop trying lower thresholds
-          }
-        }
-      } catch (err: any) {
-        results.steps[results.steps.length - 1].status = 'exception'
-        results.steps[results.steps.length - 1].error = err.message
+      if (error) {
+        results.steps[1].status = 'failed'
+        results.steps[1].error = error.message
+      } else {
+        results.steps[1].status = 'success'
+        results.steps[1].results_count = data?.length || 0
+        results.steps[1].results = data?.map((r: any) => ({
+          id: r.id,
+          similarity: r.similarity,
+          content_preview: r.content?.substring(0, 100) + '...'
+        }))
       }
+    } catch (err: any) {
+      results.steps[1].status = 'exception'
+      results.steps[1].error = err.message
     }
 
-    // Direct chunk query (bypass vector search)
+    // Step 3: Compute raw similarity scores directly via SQL
     try {
-      const stepIndex = results.steps.length
-      results.steps.push({ step: stepIndex + 1, name: 'Direct chunk query (no vector)', status: 'starting' })
+      results.steps.push({ step: 3, name: 'Raw similarity check', status: 'starting' })
+
+      // Get a few chunks and compute similarity manually
+      const { data: rawData, error: rawError } = await serviceClient.rpc('debug_similarity', {
+        query_embedding: embeddingString,
+        filter_product_id: productId,
+        check_count: 5,
+      })
+
+      if (rawError) {
+        // Function might not exist, try raw query
+        const { data: chunks } = await serviceClient
+          .from('document_chunks')
+          .select('id, embedding')
+          .eq('product_id', productId)
+          .not('embedding', 'is', null)
+          .limit(3)
+
+        results.steps[2].status = 'info'
+        results.steps[2].message = 'debug_similarity function not found'
+        results.steps[2].chunks_with_embeddings = chunks?.length || 0
+        results.steps[2].first_chunk_embedding_sample = chunks?.[0]?.embedding?.slice(0, 5)
+      } else {
+        results.steps[2].status = 'success'
+        results.steps[2].results = rawData
+      }
+    } catch (err: any) {
+      results.steps[2].status = 'exception'
+      results.steps[2].error = err.message
+    }
+
+    // Step 4: Direct chunk query (bypass vector search)
+    try {
+      results.steps.push({ step: 4, name: 'Direct chunk query (no vector)', status: 'starting' })
 
       const { data, error } = await serviceClient
         .from('document_chunks')
@@ -107,12 +130,12 @@ export async function GET(request: NextRequest) {
         .limit(3)
 
       if (error) {
-        results.steps[stepIndex].status = 'failed'
-        results.steps[stepIndex].error = error.message
+        results.steps[3].status = 'failed'
+        results.steps[3].error = error.message
       } else {
-        results.steps[stepIndex].status = 'success'
-        results.steps[stepIndex].results_count = data?.length || 0
-        results.steps[stepIndex].results = data?.map((r: any) => ({
+        results.steps[3].status = 'success'
+        results.steps[3].results_count = data?.length || 0
+        results.steps[3].results = data?.map((r: any) => ({
           id: r.id,
           document_id: r.document_id,
           product_id: r.product_id,
@@ -120,14 +143,13 @@ export async function GET(request: NextRequest) {
         }))
       }
     } catch (err: any) {
-      results.steps[results.steps.length - 1].status = 'exception'
-      results.steps[results.steps.length - 1].error = err.message
+      results.steps[3].status = 'exception'
+      results.steps[3].error = err.message
     }
 
-    // Text search fallback
+    // Step 5: Text search fallback
     try {
-      const stepIndex = results.steps.length
-      results.steps.push({ step: stepIndex + 1, name: 'Text search fallback', status: 'starting' })
+      results.steps.push({ step: 5, name: 'Text search fallback', status: 'starting' })
 
       const keywords = query.toLowerCase().split(/\s+/).filter(k => k.length > 2)
 
@@ -138,8 +160,8 @@ export async function GET(request: NextRequest) {
         .limit(50)
 
       if (error) {
-        results.steps[stepIndex].status = 'failed'
-        results.steps[stepIndex].error = error.message
+        results.steps[4].status = 'failed'
+        results.steps[4].error = error.message
       } else {
         // Score by keyword matches
         const scored = (data || [])
@@ -152,11 +174,11 @@ export async function GET(request: NextRequest) {
           .sort((a, b) => b.score - a.score)
           .slice(0, 5)
 
-        results.steps[stepIndex].status = 'success'
-        results.steps[stepIndex].keywords = keywords
-        results.steps[stepIndex].total_chunks_checked = data?.length || 0
-        results.steps[stepIndex].matching_chunks = scored.length
-        results.steps[stepIndex].results = scored.map((r: any) => ({
+        results.steps[4].status = 'success'
+        results.steps[4].keywords = keywords
+        results.steps[4].total_chunks_checked = data?.length || 0
+        results.steps[4].matching_chunks = scored.length
+        results.steps[4].results = scored.map((r: any) => ({
           id: r.id,
           document_id: r.document_id,
           score: r.score,
@@ -164,8 +186,8 @@ export async function GET(request: NextRequest) {
         }))
       }
     } catch (err: any) {
-      results.steps[results.steps.length - 1].status = 'exception'
-      results.steps[results.steps.length - 1].error = err.message
+      results.steps[4].status = 'exception'
+      results.steps[4].error = err.message
     }
 
     return NextResponse.json(results)
