@@ -1,11 +1,15 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Globe, ChevronDown, Check } from 'lucide-react'
+import { Globe, ChevronDown, ChevronUp, Check } from 'lucide-react'
 import { useLanguage } from './LanguageProvider'
 import { languages, type Language } from '@/lib/i18n/languages'
 
-export function LanguageSwitcher() {
+interface LanguageSwitcherProps {
+  direction?: 'up' | 'down'
+}
+
+export function LanguageSwitcher({ direction = 'down' }: LanguageSwitcherProps) {
   const { language, setLanguage } = useLanguage()
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -30,6 +34,11 @@ export function LanguageSwitcher() {
     setIsOpen(false)
   }
 
+  const ChevronIcon = direction === 'up' ? ChevronUp : ChevronDown
+  const dropdownPosition = direction === 'up'
+    ? 'bottom-full mb-1'
+    : 'top-full mt-1'
+
   return (
     <div className="relative" ref={dropdownRef}>
       <button
@@ -40,15 +49,14 @@ export function LanguageSwitcher() {
       >
         <Globe className="w-4 h-4" />
         <span className="uppercase font-medium">{language}</span>
-        <ChevronDown
+        <ChevronIcon
           className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
 
       {isOpen && (
         <div
-          className="absolute right-0 top-full mt-1 py-2 w-40 bg-white rounded-lg shadow-lg border border-slate-200 z-[100]"
-          style={{ minHeight: 'auto' }}
+          className={`absolute left-0 ${dropdownPosition} py-2 w-40 bg-white rounded-lg shadow-lg border border-slate-200 z-[100]`}
         >
           {languages.map((lang) => (
             <button

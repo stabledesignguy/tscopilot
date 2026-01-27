@@ -10,6 +10,7 @@ import {
   ArrowLeft,
 } from 'lucide-react'
 import { useTranslation } from '@/lib/i18n/useTranslation'
+import { LanguageSwitcher } from '@/components/providers/LanguageSwitcher'
 
 export function AdminSidebar() {
   const { t } = useTranslation()
@@ -23,7 +24,7 @@ export function AdminSidebar() {
   ]
 
   return (
-    <aside className="w-64 bg-white border-r border-slate-200 flex flex-col">
+    <aside className="w-64 bg-white border-r border-slate-200 flex flex-col relative z-20">
       <div className="p-6 border-b border-slate-200">
         <h1 className="text-xl font-bold text-slate-900">{t('admin.panelTitle')}</h1>
         <p className="text-sm text-slate-500">{t('admin.panelSubtitle')}</p>
@@ -52,7 +53,10 @@ export function AdminSidebar() {
         </ul>
       </nav>
 
-      <div className="p-4 border-t border-slate-200">
+      <div className="p-4 border-t border-slate-200 space-y-3">
+        <div className="flex items-center justify-between px-3">
+          <LanguageSwitcher direction="up" />
+        </div>
         <Link
           href="/"
           className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 rounded-lg hover:bg-slate-100 transition-colors"
