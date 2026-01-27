@@ -17,17 +17,19 @@ export async function GET() {
       .from('system_instructions') as any)
       .select('*')
       .limit(1)
-      .single()
 
-    if (error && error.code !== 'PGRST116') {
-      // PGRST116 = no rows returned, which is fine
+    if (error) {
+      console.error('Error fetching system instructions:', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
+    // data is an array, get first item if exists
+    const instruction = data?.[0]
+
     return NextResponse.json({
-      instructions: data?.instructions || null,
+      instructions: instruction?.instructions || null,
       defaultInstructions: defaultSystemPrompt,
-      updatedAt: data?.updated_at || null,
+      updatedAt: instruction?.updated_at || null,
     })
   } catch (error) {
     return NextResponse.json(
@@ -70,11 +72,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if a record already exists
-    const { data: existing } = await (supabase
+    const { data: existingData } = await (supabase
       .from('system_instructions') as any)
       .select('id')
       .limit(1)
-      .single()
+
+    const existing = existingData?.[0]
 
     let result
     if (existing) {

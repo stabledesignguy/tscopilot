@@ -178,15 +178,21 @@ export interface DocumentSource {
 
 export async function getSystemInstructions(supabase: any): Promise<string> {
   try {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('system_instructions')
       .select('instructions')
       .limit(1)
-      .single()
 
-    return data?.instructions || defaultSystemPrompt
-  } catch {
-    // If any error occurs (including no rows), return default
+    if (error) {
+      console.error('Error fetching system instructions:', error)
+      return defaultSystemPrompt
+    }
+
+    // data is an array, get first item if exists
+    const instructions = data?.[0]?.instructions
+    return instructions || defaultSystemPrompt
+  } catch (err) {
+    console.error('Exception fetching system instructions:', err)
     return defaultSystemPrompt
   }
 }
