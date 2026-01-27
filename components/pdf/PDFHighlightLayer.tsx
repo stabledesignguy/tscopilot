@@ -32,7 +32,6 @@ export function PDFHighlightLayer({
 
   const applyHighlights = useCallback(() => {
     if (!containerRef.current || !searchText) {
-      console.log('Highlight: No container or search text')
       return false
     }
 
@@ -49,30 +48,23 @@ export function PDFHighlightLayer({
     let textLayer: HTMLElement | null = null
     for (const selector of selectors) {
       textLayer = containerRef.current.querySelector(selector) as HTMLElement
-      if (textLayer) {
-        console.log('Highlight: Found text layer with selector:', selector)
-        break
-      }
+      if (textLayer) break
     }
 
     if (!textLayer) {
-      console.log('Highlight: Text layer not found, will retry...')
       return false
     }
 
     // Get all text spans
     const textSpans = textLayer.querySelectorAll('span')
-    console.log('Highlight: Found', textSpans.length, 'text spans')
 
     if (textSpans.length === 0) {
-      console.log('Highlight: No spans found, will retry...')
       return false
     }
 
     // Normalize search text and extract words
     const normalizedSearch = normalizeText(searchText)
     const searchWords = normalizedSearch.split(' ').filter(w => w.length > 2)
-    console.log('Highlight: Searching for words:', searchWords.slice(0, 5))
 
     // Find spans containing search words
     const matchedSpans: HTMLElement[] = []
@@ -87,8 +79,6 @@ export function PDFHighlightLayer({
         matchedSpans.push(span as HTMLElement)
       }
     })
-
-    console.log('Highlight: Found', matchedSpans.length, 'matching spans')
 
     // Create highlight overlays
     matchedSpans.forEach((span) => {
@@ -117,7 +107,6 @@ export function PDFHighlightLayer({
       highlightsRef.current.push(highlight)
     })
 
-    console.log('Highlight: Created', highlightsRef.current.length, 'highlights')
     return highlightsRef.current.length > 0
   }, [searchText, pageNumber, containerRef, clearHighlights])
 

@@ -170,6 +170,7 @@ export async function POST(request: NextRequest) {
       if (chunks.length > 0) {
         console.log('RAG: Top chunk score:', chunks[0]?.score)
         console.log('RAG: Sources:', chunks.map(c => c.document?.filename).join(', '))
+        console.log('RAG: PageInfo available:', chunks.filter(c => c.pageInfo).length, 'of', chunks.length, 'chunks')
 
         // Build context with source information
         const contextParts = chunks.map((c, index) => {
