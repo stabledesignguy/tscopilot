@@ -70,21 +70,32 @@ export async function GET(request: NextRequest) {
       const chunksWithSimilarity = chunks?.map(c => {
         let similarity = null
         if (queryEmbedding && c.embedding) {
-          // Compute cosine similarity
-          const embedding = typeof c.embedding === 'string'
-            ? JSON.parse(c.embedding.replace(/[\[\]]/g, '').split(',').map(Number))
-            : c.embedding
-
-          if (Array.isArray(embedding) && embedding.length === queryEmbedding.length) {
-            let dotProduct = 0
-            let normA = 0
-            let normB = 0
-            for (let i = 0; i < queryEmbedding.length; i++) {
-              dotProduct += queryEmbedding[i] * embedding[i]
-              normA += queryEmbedding[i] * queryEmbedding[i]
-              normB += embedding[i] * embedding[i]
+          try {
+            // Parse embedding - it could be array or string like "[0.1,0.2,...]"
+            let embedding: number[]
+            if (Array.isArray(c.embedding)) {
+              embedding = c.embedding
+            } else if (typeof c.embedding === 'string') {
+              // Remove brackets and split by comma
+              const cleaned = c.embedding.replace(/^\[|\]$/g, '')
+              embedding = cleaned.split(',').map(Number)
+            } else {
+              embedding = []
             }
-            similarity = dotProduct / (Math.sqrt(normA) * Math.sqrt(normB))
+
+            if (embedding.length === queryEmbedding.length) {
+              let dotProduct = 0
+              let normA = 0
+              let normB = 0
+              for (let i = 0; i < queryEmbedding.length; i++) {
+                dotProduct += queryEmbedding[i] * embedding[i]
+                normA += queryEmbedding[i] * queryEmbedding[i]
+                normB += embedding[i] * embedding[i]
+              }
+              similarity = dotProduct / (Math.sqrt(normA) * Math.sqrt(normB))
+            }
+          } catch (e) {
+            console.error('Failed to compute similarity:', e)
           }
         }
 
