@@ -118,6 +118,14 @@
       "completed": "completed",
       "processing": "processing",
       "failed": "failed"
-    }
+    },
+    "systemInstructions": "System Instructions",
+    "systemInstructionsSubtitle": "Configure the AI assistant's behavior",
+    "instructionsPlaceholder": "Enter the system instructions for the AI assistant...",
+    "resetToDefault": "Reset to Default",
+    "resetConfirm": "Are you sure you want to reset to the default instructions?",
+    "characterCount": "{count} characters",
+    "saveSuccess": "System instructions saved successfully",
+    "saveFailed": "Failed to save system instructions"
   }
 }

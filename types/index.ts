@@ -104,6 +104,15 @@ export interface StreamingLLMResponse {
   model: string
 }
 
+// System Instructions types
+export interface SystemInstruction {
+  id: string
+  instructions: string
+  updated_by: string | null
+  created_at: string
+  updated_at: string
+}
+
 // RAG types
 export interface ChunkWithScore {
   chunk: DocumentChunk

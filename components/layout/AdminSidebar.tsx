@@ -9,6 +9,7 @@ import {
   FileText,
   FolderTree,
   ArrowLeft,
+  Settings,
 } from 'lucide-react'
 import { useTranslation } from '@/lib/i18n/useTranslation'
 import { LanguageSwitcher } from '@/components/providers/LanguageSwitcher'
@@ -19,6 +20,7 @@ export function AdminSidebar() {
 
   const navItems = [
     { href: '/admin', icon: LayoutDashboard, labelKey: 'admin.dashboard' as const },
+    { href: '/admin/instructions', icon: Settings, labelKey: 'admin.systemInstructions' as const },
     { href: '/admin/groups', icon: FolderTree, labelKey: 'admin.groups' as const },
     { href: '/admin/products', icon: Package, labelKey: 'admin.products' as const },
     { href: '/admin/documents', icon: FileText, labelKey: 'admin.documents' as const },

@@ -118,6 +118,14 @@
       "completed": "completato",
       "processing": "in elaborazione",
       "failed": "fallito"
-    }
+    },
+    "systemInstructions": "Istruzioni di sistema",
+    "systemInstructionsSubtitle": "Configura il comportamento dell'assistente IA",
+    "instructionsPlaceholder": "Inserisci le istruzioni di sistema per l'assistente IA...",
+    "resetToDefault": "Ripristina predefinito",
+    "resetConfirm": "Sei sicuro di voler ripristinare le istruzioni predefinite?",
+    "characterCount": "{count} caratteri",
+    "saveSuccess": "Istruzioni di sistema salvate con successo",
+    "saveFailed": "Salvataggio delle istruzioni di sistema fallito"
   }
 }

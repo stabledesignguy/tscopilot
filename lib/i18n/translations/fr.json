@@ -118,6 +118,14 @@
       "completed": "termine",
       "processing": "en cours",
       "failed": "echoue"
-    }
+    },
+    "systemInstructions": "Instructions systeme",
+    "systemInstructionsSubtitle": "Configurez le comportement de l'assistant IA",
+    "instructionsPlaceholder": "Entrez les instructions systeme pour l'assistant IA...",
+    "resetToDefault": "Reinitialiser par defaut",
+    "resetConfirm": "Etes-vous sur de vouloir reinitialiser aux instructions par defaut ?",
+    "characterCount": "{count} caracteres",
+    "saveSuccess": "Instructions systeme enregistrees avec succes",
+    "saveFailed": "Echec de l'enregistrement des instructions systeme"
   }
 }

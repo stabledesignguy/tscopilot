@@ -176,7 +176,27 @@ export interface DocumentSource {
   url: string
 }
 
-export function buildRAGPrompt(context: string, productName: string, sources: DocumentSource[] = []): string {
+export async function getSystemInstructions(supabase: any): Promise<string> {
+  try {
+    const { data } = await supabase
+      .from('system_instructions')
+      .select('instructions')
+      .limit(1)
+      .single()
+
+    return data?.instructions || defaultSystemPrompt
+  } catch {
+    // If any error occurs (including no rows), return default
+    return defaultSystemPrompt
+  }
+}
+
+export function buildRAGPrompt(
+  context: string,
+  productName: string,
+  sources: DocumentSource[] = [],
+  customInstructions?: string
+): string {
   // Build sources reference section
   const sourcesSection = sources.length > 0
     ? `
@@ -186,6 +206,44 @@ The following source documents are available for citation. Use the exact URLs pr
 ${sources.map(s => `- **[${s.index}]** ${s.filename}: ${s.url}`).join('\n')}
 `
     : ''
+
+  // If custom instructions are provided, use them as the base with RAG context appended
+  if (customInstructions) {
+    return `${customInstructions}
+${sourcesSection}
+## Documentation Context
+The following documentation has been retrieved as relevant to the user's question:
+
+---
+${context}
+---
+
+## Response Guidelines
+1. **Accuracy First**: Only provide information that is supported by the documentation above. If the answer isn't in the context, clearly state that and offer to help in other ways.
+2. **Be Specific**: Reference specific sections, features, or steps from the documentation with proper citations.
+3. **Structure Your Response**: Use headings, bullet points, and numbered lists for clarity.
+4. **Practical Examples**: When helpful, provide examples of how to apply the information.
+5. **Acknowledge Limitations**: If the documentation doesn't fully answer the question, say so honestly.
+6. **Stay On Topic**: Focus on ${productName} and the user's specific question.
+
+## CRITICAL: Footnotes Section Requirement
+
+You MUST end every response with a "Sources" section containing clickable links to the source documents. Use the exact URLs from the "Available Source Documents" section above.
+
+**IMPORTANT: Page-specific linking**
+To open the PDF to a specific page, append \`#page=X\` to the URL where X is the FIRST page number where the information was found.
+
+**Format for the Sources section:**
+
+---
+
+**Sources:**
+
+1. [Document Filename, Section/Page info](exact_url_from_sources_list#page=FIRST_PAGE_NUMBER)
+2. [Another Document, Section/Page info](exact_url_from_sources_list#page=FIRST_PAGE_NUMBER)
+
+This Sources section with clickable links is MANDATORY for every response.`
+  }
 
   return `You are a technical support AI assistant specializing in ${productName}.
 

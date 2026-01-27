@@ -118,6 +118,14 @@
       "completed": "abgeschlossen",
       "processing": "in Bearbeitung",
       "failed": "fehlgeschlagen"
-    }
+    },
+    "systemInstructions": "Systemanweisungen",
+    "systemInstructionsSubtitle": "Konfigurieren Sie das Verhalten des KI-Assistenten",
+    "instructionsPlaceholder": "Geben Sie die Systemanweisungen fur den KI-Assistenten ein...",
+    "resetToDefault": "Auf Standard zurucksetzen",
+    "resetConfirm": "Sind Sie sicher, dass Sie zu den Standardanweisungen zuruckkehren mochten?",
+    "characterCount": "{count} Zeichen",
+    "saveSuccess": "Systemanweisungen erfolgreich gespeichert",
+    "saveFailed": "Systemanweisungen konnten nicht gespeichert werden"
   }
 }
