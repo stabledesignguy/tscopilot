@@ -139,10 +139,12 @@ export async function POST(request: NextRequest) {
       .limit(20)
 
     const messages: LLMMessage[] =
-      history?.map((m) => ({
-        role: m.role as 'user' | 'assistant',
-        content: m.content,
-      })) || []
+      history
+        ?.filter((m) => m.content && m.content.trim().length > 0) // Filter out empty messages
+        .map((m) => ({
+          role: m.role as 'user' | 'assistant',
+          content: m.content,
+        })) || []
 
     // Retrieve relevant document chunks for RAG
     let systemPrompt = defaultSystemPrompt
@@ -222,19 +224,23 @@ export async function POST(request: NextRequest) {
         controller.enqueue(chunk)
       },
       async flush() {
-        // Save assistant message after streaming completes
-        await (supabase.from('messages') as any).insert({
-          conversation_id: activeConversationId,
-          role: 'assistant',
-          content: fullResponse,
-          llm_used: provider,
-        })
+        // Only save assistant message if it has content
+        if (fullResponse && fullResponse.trim().length > 0) {
+          await (supabase.from('messages') as any).insert({
+            conversation_id: activeConversationId,
+            role: 'assistant',
+            content: fullResponse,
+            llm_used: provider,
+          })
 
-        // Update conversation timestamp
-        await (supabase
-          .from('conversations') as any)
-          .update({ updated_at: new Date().toISOString() })
-          .eq('id', activeConversationId)
+          // Update conversation timestamp
+          await (supabase
+            .from('conversations') as any)
+            .update({ updated_at: new Date().toISOString() })
+            .eq('id', activeConversationId)
+        } else {
+          console.warn('LLM returned empty response, not saving to database')
+        }
       },
     })
 
