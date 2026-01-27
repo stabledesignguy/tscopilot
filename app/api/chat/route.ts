@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
     try {
       console.log('RAG: Product name:', product?.name, '| Product ID:', productId)
       console.log('RAG: Query:', message.slice(0, 50))
-      const chunks = await retrieveRelevantChunks(message, productId, 5)
+      const chunks = await retrieveRelevantChunks(message, productId, 15)
       console.log('RAG: Retrieved', chunks.length, 'chunks')
       if (chunks.length > 0) {
         console.log('RAG: Top chunk score:', chunks[0]?.score)
