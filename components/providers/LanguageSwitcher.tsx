@@ -56,7 +56,7 @@ export function LanguageSwitcher({ direction = 'down' }: LanguageSwitcherProps) 
 
       {isOpen && (
         <div
-          className={`absolute left-0 ${dropdownPosition} py-2 w-40 bg-white rounded-lg shadow-lg border border-secondary-200 z-[100]`}
+          className={`absolute right-0 sm:left-0 sm:right-auto ${dropdownPosition} py-2 w-40 bg-white rounded-lg shadow-lg border border-secondary-200 z-[100]`}
         >
           {languages.map((lang) => (
             <button

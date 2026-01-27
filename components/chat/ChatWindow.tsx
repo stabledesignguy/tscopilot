@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { MessageSquare, Download, Trash2 } from 'lucide-react'
+import { MessageSquare, Download, Trash2, ArrowLeft } from 'lucide-react'
 import { MessageList } from './MessageList'
 import { ChatInput } from './ChatInput'
 import { Button } from '@/components/ui/Button'
@@ -17,6 +17,7 @@ interface ChatWindowProps {
   onClear: () => void
   isLoading: boolean
   llmProvider?: LLMProvider
+  onBack?: () => void
 }
 
 export function ChatWindow({
@@ -28,6 +29,7 @@ export function ChatWindow({
   onClear,
   isLoading,
   llmProvider,
+  onBack,
 }: ChatWindowProps) {
   const { t } = useTranslation()
 
@@ -40,12 +42,12 @@ export function ChatWindow({
 
   if (!product) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-secondary-50 text-secondary-400">
-        <MessageSquare className="w-16 h-16 mb-4" />
-        <h2 className="text-xl font-medium text-secondary-600">
+      <div className="flex-1 flex flex-col items-center justify-center bg-secondary-50 text-secondary-400 p-4">
+        <MessageSquare className="w-12 sm:w-16 h-12 sm:h-16 mb-3 sm:mb-4" />
+        <h2 className="text-lg sm:text-xl font-medium text-secondary-600 text-center">
           {t('chat.selectProduct')}
         </h2>
-        <p className="mt-2 text-sm">
+        <p className="mt-2 text-xs sm:text-sm text-center max-w-xs">
           {t('chat.selectProductDesc')}
         </p>
       </div>
@@ -55,23 +57,34 @@ export function ChatWindow({
   return (
     <div className="flex-1 flex flex-col bg-white overflow-hidden">
       {/* Header - Fixed at top of chat area */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-secondary-200 bg-white flex-shrink-0 z-10">
-        <div>
-          <h1 className="text-lg font-semibold text-secondary-900">{product.name}</h1>
-          {product.description && (
-            <p className="text-sm text-secondary-500">{product.description}</p>
+      <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 border-b border-secondary-200 bg-white flex-shrink-0 z-10">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="md:hidden flex-shrink-0 p-1.5 -ml-1 text-secondary-500 hover:text-secondary-700 hover:bg-secondary-100 rounded-lg transition-colors"
+              aria-label={t('common.back')}
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
           )}
+          <div className="min-w-0">
+            <h1 className="text-base sm:text-lg font-semibold text-secondary-900 truncate">{product.name}</h1>
+            {product.description && (
+              <p className="text-xs sm:text-sm text-secondary-500 truncate hidden sm:block">{product.description}</p>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
           {messages.length > 0 && (
             <>
-              <Button variant="ghost" size="sm" onClick={onExport}>
-                <Download className="w-4 h-4 mr-1" />
-                {t('chat.export')}
+              <Button variant="ghost" size="sm" onClick={onExport} className="px-2 sm:px-3">
+                <Download className="w-4 h-4 sm:mr-1" />
+                <span className="hidden sm:inline">{t('chat.export')}</span>
               </Button>
-              <Button variant="ghost" size="sm" onClick={onClear}>
-                <Trash2 className="w-4 h-4 mr-1" />
-                {t('chat.clear')}
+              <Button variant="ghost" size="sm" onClick={onClear} className="px-2 sm:px-3">
+                <Trash2 className="w-4 h-4 sm:mr-1" />
+                <span className="hidden sm:inline">{t('chat.clear')}</span>
               </Button>
             </>
           )}

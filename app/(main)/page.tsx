@@ -183,28 +183,39 @@ export default function HomePage() {
     }
   }, [t])
 
+  const handleSelectProduct = (product: Product) => {
+    setSelectedProduct(product)
+  }
+
+  const handleBackToProducts = () => {
+    setSelectedProduct(null)
+  }
+
   return (
     <div className="flex-1 flex overflow-hidden">
-      {/* Sidebar */}
-      <aside className="w-80 bg-white border-r border-secondary-200 flex flex-col">
+      {/* Sidebar - Hidden on mobile when product is selected */}
+      <aside className={`${selectedProduct ? 'hidden md:flex' : 'flex'} w-full md:w-80 bg-white border-r border-secondary-200 flex-col`}>
         <ProductList
           products={products}
           selectedProductId={selectedProduct?.id || null}
-          onSelectProduct={setSelectedProduct}
+          onSelectProduct={handleSelectProduct}
         />
       </aside>
 
-      {/* Chat Area */}
-      <ChatWindow
-        product={selectedProduct}
-        conversationId={conversationId}
-        messages={messages}
-        onSendMessage={handleSendMessage}
-        onExport={handleExport}
-        onClear={handleClear}
-        isLoading={isLoading}
-        llmProvider={llmProvider}
-      />
+      {/* Chat Area - Hidden on mobile when no product selected */}
+      <div className={`${selectedProduct ? 'flex' : 'hidden md:flex'} flex-1 flex-col`}>
+        <ChatWindow
+          product={selectedProduct}
+          conversationId={conversationId}
+          messages={messages}
+          onSendMessage={handleSendMessage}
+          onExport={handleExport}
+          onClear={handleClear}
+          isLoading={isLoading}
+          llmProvider={llmProvider}
+          onBack={handleBackToProducts}
+        />
+      </div>
     </div>
   )
 }

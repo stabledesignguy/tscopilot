@@ -7,7 +7,8 @@
     "edit": "Modifier",
     "saving": "Enregistrement...",
     "saveChanges": "Enregistrer les modifications",
-    "error": "Une erreur s'est produite"
+    "error": "Une erreur s'est produite",
+    "back": "Retour"
   },
   "nav": {
     "admin": "Admin",

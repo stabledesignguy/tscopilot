@@ -50,7 +50,7 @@ export function ChatInput({
   }
 
   return (
-    <div className="border-t border-secondary-200 bg-white p-4 flex-shrink-0">
+    <div className="border-t border-secondary-200 bg-white p-2 sm:p-4 flex-shrink-0">
       <form onSubmit={handleSubmit} className="max-w-3xl mx-auto">
         <div className="relative flex items-end gap-2 bg-secondary-50 rounded-2xl border border-secondary-200 focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-100 transition-all">
           <textarea
@@ -62,7 +62,7 @@ export function ChatInput({
             placeholder={actualPlaceholder}
             disabled={disabled}
             rows={1}
-            className="flex-1 bg-transparent px-4 py-3 text-sm resize-none focus:outline-none disabled:opacity-50 max-h-[200px]"
+            className="flex-1 bg-transparent px-3 sm:px-4 py-2.5 sm:py-3 text-sm resize-none focus:outline-none disabled:opacity-50 max-h-[200px]"
           />
           <div className="flex items-center gap-1 pr-2 pb-2">
             <button
@@ -74,7 +74,7 @@ export function ChatInput({
             </button>
           </div>
         </div>
-        <p className="mt-2 text-xs text-secondary-400 text-center">
+        <p className="mt-2 text-xs text-secondary-400 text-center hidden sm:block">
           {t('chat.enterToSend')}
         </p>
       </form>
