@@ -40,9 +40,9 @@ export function ChatWindow({
 
   if (!product) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 text-slate-400">
+      <div className="flex-1 flex flex-col items-center justify-center bg-secondary-50 text-secondary-400">
         <MessageSquare className="w-16 h-16 mb-4" />
-        <h2 className="text-xl font-medium text-slate-600">
+        <h2 className="text-xl font-medium text-secondary-600">
           {t('chat.selectProduct')}
         </h2>
         <p className="mt-2 text-sm">
@@ -55,11 +55,11 @@ export function ChatWindow({
   return (
     <div className="flex-1 flex flex-col bg-white overflow-hidden">
       {/* Header - Fixed at top of chat area */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white flex-shrink-0 z-10">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-secondary-200 bg-white flex-shrink-0 z-10">
         <div>
-          <h1 className="text-lg font-semibold text-slate-900">{product.name}</h1>
+          <h1 className="text-lg font-semibold text-secondary-900">{product.name}</h1>
           {product.description && (
-            <p className="text-sm text-slate-500">{product.description}</p>
+            <p className="text-sm text-secondary-500">{product.description}</p>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -80,7 +80,7 @@ export function ChatWindow({
 
       {/* Messages */}
       {messages.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
+        <div className="flex-1 flex flex-col items-center justify-center text-secondary-400">
           <MessageSquare className="w-12 h-12 mb-3" />
           <p className="text-sm">{t('chat.askAnything', { productName: product.name })}</p>
         </div>

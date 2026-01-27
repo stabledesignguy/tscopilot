@@ -78,7 +78,7 @@ export function ProductForm({ product, onSubmit, onCancel }: ProductFormProps) {
       <div>
         <label
           htmlFor="description"
-          className="block text-sm font-medium text-slate-700 mb-1"
+          className="block text-sm font-medium text-secondary-700 mb-1"
         >
           {t('products.description')}
         </label>
@@ -88,14 +88,14 @@ export function ProductForm({ product, onSubmit, onCancel }: ProductFormProps) {
           onChange={(e) => setDescription(e.target.value)}
           placeholder={t('products.descriptionPlaceholder')}
           rows={3}
-          className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+          className="w-full px-4 py-2.5 rounded-lg border border-secondary-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
         />
       </div>
 
       <div>
         <label
           htmlFor="group"
-          className="block text-sm font-medium text-slate-700 mb-1"
+          className="block text-sm font-medium text-secondary-700 mb-1"
         >
           {t('products.group')}
         </label>
@@ -103,7 +103,7 @@ export function ProductForm({ product, onSubmit, onCancel }: ProductFormProps) {
           id="group"
           value={groupId}
           onChange={(e) => setGroupId(e.target.value)}
-          className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors bg-white"
+          className="w-full px-4 py-2.5 rounded-lg border border-secondary-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors bg-white"
         >
           <option value="">{t('products.noGroup')}</option>
           {groups.map((group) => (

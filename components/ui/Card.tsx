@@ -8,7 +8,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
   ({ className = '', variant = 'default', children, ...props }, ref) => {
     const variants = {
       default: 'bg-white shadow-sm',
-      bordered: 'bg-white border border-slate-200',
+      bordered: 'bg-white border border-secondary-200',
     }
 
     return (
@@ -27,7 +27,7 @@ Card.displayName = 'Card'
 
 export function CardHeader({ className = '', children, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={`px-6 py-4 border-b border-slate-100 ${className}`} {...props}>
+    <div className={`px-6 py-4 border-b border-secondary-100 ${className}`} {...props}>
       {children}
     </div>
   )
@@ -43,7 +43,7 @@ export function CardContent({ className = '', children, ...props }: HTMLAttribut
 
 export function CardFooter({ className = '', children, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={`px-6 py-4 border-t border-slate-100 ${className}`} {...props}>
+    <div className={`px-6 py-4 border-t border-secondary-100 ${className}`} {...props}>
       {children}
     </div>
   )

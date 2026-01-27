@@ -186,7 +186,7 @@ export default function HomePage() {
   return (
     <div className="flex-1 flex overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-80 bg-white border-r border-slate-200 flex flex-col">
+      <aside className="w-80 bg-white border-r border-secondary-200 flex flex-col">
         <ProductList
           products={products}
           selectedProductId={selectedProduct?.id || null}

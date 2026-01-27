@@ -32,7 +32,7 @@ export function Avatar({ src, alt = '', size = 'md', fallback }: AvatarProps) {
 
   return (
     <div
-      className={`${sizes[size]} rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-medium`}
+      className={`${sizes[size]} rounded-full bg-secondary-200 flex items-center justify-center text-secondary-600 font-medium`}
     >
       {fallback ? (
         fallback.charAt(0).toUpperCase()

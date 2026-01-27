@@ -186,7 +186,7 @@ export function DocumentUploader({
         className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
           isDragging
             ? 'border-primary-500 bg-primary-50'
-            : 'border-slate-300 hover:border-slate-400'
+            : 'border-secondary-300 hover:border-secondary-400'
         }`}
       >
         <input
@@ -201,13 +201,13 @@ export function DocumentUploader({
         />
         <Upload
           className={`w-10 h-10 mx-auto mb-3 ${
-            isDragging ? 'text-primary-500' : 'text-slate-400'
+            isDragging ? 'text-primary-500' : 'text-secondary-400'
           }`}
         />
-        <p className="text-sm text-slate-600 mb-1">
+        <p className="text-sm text-secondary-600 mb-1">
           {t('documents.dragAndDrop')}
         </p>
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-secondary-400">
           {t('documents.supportedFormats')}
         </p>
       </div>
@@ -218,15 +218,15 @@ export function DocumentUploader({
           {files.map((item, index) => (
             <div
               key={`${item.file.name}-${index}`}
-              className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg"
+              className="flex items-center gap-3 p-3 bg-secondary-50 rounded-lg"
             >
-              <File className="w-5 h-5 text-slate-400 flex-shrink-0" />
+              <File className="w-5 h-5 text-secondary-400 flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-slate-700 truncate">
+                <p className="text-sm font-medium text-secondary-700 truncate">
                   {item.file.name}
                 </p>
                 <div className="flex items-center gap-2">
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-secondary-400">
                     {formatFileSize(item.file.size)}
                   </p>
                   {item.status === 'uploading' && item.progress > 0 && (
@@ -236,7 +236,7 @@ export function DocumentUploader({
                   )}
                 </div>
                 {item.status === 'uploading' && (
-                  <div className="mt-1 h-1 bg-slate-200 rounded-full overflow-hidden">
+                  <div className="mt-1 h-1 bg-secondary-200 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-primary-500 transition-all duration-300"
                       style={{ width: `${item.progress}%` }}
@@ -256,9 +256,9 @@ export function DocumentUploader({
                   <AlertCircle className="w-5 h-5 text-red-500" />
                   <button
                     onClick={() => removeFile(item.file)}
-                    className="p-1 hover:bg-slate-200 rounded"
+                    className="p-1 hover:bg-secondary-200 rounded"
                   >
-                    <X className="w-4 h-4 text-slate-400" />
+                    <X className="w-4 h-4 text-secondary-400" />
                   </button>
                 </div>
               )}

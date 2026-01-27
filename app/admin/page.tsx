@@ -112,8 +112,8 @@ export default function AdminDashboard() {
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">{t('admin.dashboard')}</h1>
-        <p className="text-slate-500">{t('admin.dashboardSubtitle')}</p>
+        <h1 className="text-2xl font-bold text-secondary-900">{t('admin.dashboard')}</h1>
+        <p className="text-secondary-500">{t('admin.dashboardSubtitle')}</p>
       </div>
 
       {/* Stats */}
@@ -125,8 +125,8 @@ export default function AdminDashboard() {
                 <stat.icon className="w-6 h-6 text-white" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
-                <p className="text-sm text-slate-500">{stat.label}</p>
+                <p className="text-2xl font-bold text-secondary-900">{stat.value}</p>
+                <p className="text-sm text-secondary-500">{stat.label}</p>
               </div>
             </CardContent>
           </Card>
@@ -136,7 +136,7 @@ export default function AdminDashboard() {
       {/* Recent Documents */}
       <Card>
         <CardHeader>
-          <h2 className="text-lg font-semibold text-slate-900">
+          <h2 className="text-lg font-semibold text-secondary-900">
             {t('admin.recentDocuments')}
           </h2>
         </CardHeader>
@@ -146,11 +146,11 @@ export default function AdminDashboard() {
               {recentDocuments.map((doc) => (
                 <div
                   key={doc.id}
-                  className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0"
+                  className="flex items-center justify-between py-2 border-b border-secondary-100 last:border-0"
                 >
                   <div>
-                    <p className="font-medium text-slate-900">{doc.filename}</p>
-                    <p className="text-sm text-slate-500">
+                    <p className="font-medium text-secondary-900">{doc.filename}</p>
+                    <p className="text-sm text-secondary-500">
                       {doc.products?.name}
                     </p>
                   </div>
@@ -162,7 +162,7 @@ export default function AdminDashboard() {
                           ? 'bg-yellow-100 text-yellow-700'
                           : doc.processing_status === 'failed'
                             ? 'bg-red-100 text-red-700'
-                            : 'bg-slate-100 text-slate-700'
+                            : 'bg-secondary-100 text-secondary-700'
                     }`}
                   >
                     {getStatusText(doc.processing_status)}
@@ -171,7 +171,7 @@ export default function AdminDashboard() {
               ))}
             </div>
           ) : (
-            <p className="text-slate-500 text-center py-4">
+            <p className="text-secondary-500 text-center py-4">
               {t('admin.noDocumentsYet')}
             </p>
           )}

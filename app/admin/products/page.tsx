@@ -99,8 +99,8 @@ export default function ProductsPage() {
     <div className="p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">{t('products.title')}</h1>
-          <p className="text-slate-500">{t('products.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-secondary-900">{t('products.title')}</h1>
+          <p className="text-secondary-500">{t('products.subtitle')}</p>
         </div>
         <Button onClick={() => setShowForm(true)}>
           <Plus className="w-4 h-4 mr-2" />
@@ -138,7 +138,7 @@ export default function ProductsPage() {
             <Card key={product.id}>
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 bg-secondary-100 rounded-lg flex items-center justify-center flex-shrink-0">
                     {product.image_url ? (
                       <img
                         src={product.image_url}
@@ -146,11 +146,11 @@ export default function ProductsPage() {
                         className="w-8 h-8 object-contain"
                       />
                     ) : (
-                      <Box className="w-6 h-6 text-slate-400" />
+                      <Box className="w-6 h-6 text-secondary-400" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-slate-900 truncate">
+                    <h3 className="font-medium text-secondary-900 truncate">
                       {product.name}
                     </h3>
                     {(product as any).group && (
@@ -162,13 +162,13 @@ export default function ProductsPage() {
                       </div>
                     )}
                     {product.description && (
-                      <p className="text-sm text-slate-500 line-clamp-2 mt-1">
+                      <p className="text-sm text-secondary-500 line-clamp-2 mt-1">
                         {product.description}
                       </p>
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-100">
+                <div className="flex items-center gap-2 mt-4 pt-4 border-t border-secondary-100">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -194,11 +194,11 @@ export default function ProductsPage() {
       ) : (
         <Card>
           <CardContent className="py-12 text-center">
-            <Box className="w-12 h-12 mx-auto text-slate-300 mb-4" />
-            <h3 className="text-lg font-medium text-slate-900 mb-2">
+            <Box className="w-12 h-12 mx-auto text-secondary-300 mb-4" />
+            <h3 className="text-lg font-medium text-secondary-900 mb-2">
               {t('products.noProductsYet')}
             </h3>
-            <p className="text-slate-500 mb-4">
+            <p className="text-secondary-500 mb-4">
               {t('products.getStarted')}
             </p>
             <Button onClick={() => setShowForm(true)}>

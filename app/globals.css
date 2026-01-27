@@ -4,11 +4,11 @@
 
 @layer base {
   * {
-    border-color: #e2e8f0;
+    border-color: #E7E7E7;
   }
   body {
     background-color: #ffffff;
-    color: #1e293b;
+    color: #2D2D2D;
   }
 }
 
@@ -23,12 +23,12 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #D1D1D1;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #B0B0B0;
 }
 
 /* Chat message animations */

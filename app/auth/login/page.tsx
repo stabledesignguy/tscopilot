@@ -2,8 +2,9 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
-import { Loader2, MessageSquare } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { useTranslation } from '@/lib/i18n/useTranslation'
 
 export default function LoginPage() {
@@ -49,22 +50,26 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-secondary-50 to-secondary-100 px-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-xl p-8">
           {/* Logo */}
           <div className="flex items-center justify-center mb-8">
-            <div className="bg-primary-600 p-3 rounded-xl">
-              <MessageSquare className="w-8 h-8 text-white" />
-            </div>
-            <h1 className="ml-3 text-2xl font-bold text-slate-900">TScopilot</h1>
+            <Image
+              src="/logo.png"
+              alt="TScopilot"
+              width={200}
+              height={50}
+              className="h-12 w-auto"
+              priority
+            />
           </div>
 
           {/* Title */}
-          <h2 className="text-xl font-semibold text-center text-slate-800 mb-2">
+          <h2 className="text-xl font-semibold text-center text-secondary-800 mb-2">
             {isSignUp ? t('auth.createAccount') : t('auth.welcomeBack')}
           </h2>
-          <p className="text-slate-500 text-center mb-6">
+          <p className="text-secondary-500 text-center mb-6">
             {isSignUp
               ? t('auth.signUpSubtitle')
               : t('auth.signInSubtitle')}
@@ -75,7 +80,7 @@ export default function LoginPage() {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-slate-700 mb-1"
+                className="block text-sm font-medium text-secondary-700 mb-1"
               >
                 {t('auth.email')}
               </label>
@@ -85,7 +90,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                className="w-full px-4 py-2.5 rounded-lg border border-secondary-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
                 placeholder={t('auth.emailPlaceholder')}
               />
             </div>
@@ -93,7 +98,7 @@ export default function LoginPage() {
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-slate-700 mb-1"
+                className="block text-sm font-medium text-secondary-700 mb-1"
               >
                 {t('auth.password')}
               </label>
@@ -104,7 +109,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                className="w-full px-4 py-2.5 rounded-lg border border-secondary-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
                 placeholder={t('auth.passwordPlaceholder')}
               />
             </div>
@@ -137,7 +142,7 @@ export default function LoginPage() {
           </form>
 
           {/* Toggle */}
-          <p className="mt-6 text-center text-sm text-slate-600">
+          <p className="mt-6 text-center text-sm text-secondary-600">
             {isSignUp ? t('auth.alreadyHaveAccount') : t('auth.dontHaveAccount')}{' '}
             <button
               onClick={() => {

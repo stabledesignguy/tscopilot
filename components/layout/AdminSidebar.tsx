@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
@@ -24,10 +25,18 @@ export function AdminSidebar() {
   ]
 
   return (
-    <aside className="w-64 bg-white border-r border-slate-200 flex flex-col relative z-20">
-      <div className="p-6 border-b border-slate-200">
-        <h1 className="text-xl font-bold text-slate-900">{t('admin.panelTitle')}</h1>
-        <p className="text-sm text-slate-500">{t('admin.panelSubtitle')}</p>
+    <aside className="w-64 bg-white border-r border-secondary-200 flex flex-col relative z-20">
+      <div className="p-6 border-b border-secondary-200">
+        <Image
+          src="/logo.png"
+          alt="TScopilot"
+          width={140}
+          height={35}
+          className="h-7 w-auto mb-3"
+          priority
+        />
+        <h2 className="text-lg font-bold text-secondary-700">{t('admin.panelTitle')}</h2>
+        <p className="text-sm text-secondary-400">{t('admin.panelSubtitle')}</p>
       </div>
 
       <nav className="flex-1 p-4">
@@ -40,8 +49,8 @@ export function AdminSidebar() {
                   href={item.href}
                   className={`flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-primary-50 text-primary-700 font-medium'
-                      : 'text-slate-600 hover:bg-slate-100'
+                      ? 'bg-primary-50 text-primary-600 font-medium'
+                      : 'text-secondary-600 hover:bg-secondary-100'
                   }`}
                 >
                   <item.icon className="w-5 h-5" />
@@ -53,13 +62,13 @@ export function AdminSidebar() {
         </ul>
       </nav>
 
-      <div className="p-4 border-t border-slate-200 space-y-3">
+      <div className="p-4 border-t border-secondary-200 space-y-3">
         <div className="flex items-center justify-between px-3">
           <LanguageSwitcher direction="up" />
         </div>
         <Link
           href="/"
-          className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 rounded-lg hover:bg-slate-100 transition-colors"
+          className="flex items-center gap-2 px-3 py-2 text-sm text-secondary-600 rounded-lg hover:bg-secondary-100 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           {t('nav.backToApp')}

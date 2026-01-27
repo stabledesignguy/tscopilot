@@ -84,15 +84,15 @@ export function ProductList({
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Search - Fixed at top */}
-      <div className="p-4 border-b border-slate-200 flex-shrink-0 bg-white">
+      <div className="p-4 border-b border-secondary-200 flex-shrink-0 bg-white">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-secondary-400" />
           <input
             type="text"
             placeholder={t('products.search')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+            className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-secondary-200 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
           />
         </div>
       </div>
@@ -108,23 +108,23 @@ export function ProductList({
                   <div>
                     <button
                       onClick={() => toggleGroup(group.groupId!)}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-slate-50 rounded-lg transition-colors"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-secondary-50 rounded-lg transition-colors"
                     >
                       {collapsedGroups.has(group.groupId!) ? (
-                        <ChevronRight className="w-4 h-4 text-slate-400" />
+                        <ChevronRight className="w-4 h-4 text-secondary-400" />
                       ) : (
-                        <ChevronDown className="w-4 h-4 text-slate-400" />
+                        <ChevronDown className="w-4 h-4 text-secondary-400" />
                       )}
                       <FolderTree className="w-4 h-4 text-primary-500" />
-                      <span className="font-bold text-base text-slate-800">
+                      <span className="font-bold text-base text-secondary-800">
                         {group.groupName}
                       </span>
-                      <span className="text-xs text-slate-400 ml-auto">
+                      <span className="text-xs text-secondary-400 ml-auto">
                         {group.products.length}
                       </span>
                     </button>
                     {!collapsedGroups.has(group.groupId!) && (
-                      <div className="ml-4 mt-1 space-y-1 border-l-2 border-slate-100 pl-2">
+                      <div className="ml-4 mt-1 space-y-1 border-l-2 border-secondary-100 pl-2">
                         {group.products.map((product) => (
                           <ProductCard
                             key={product.id}
@@ -140,7 +140,7 @@ export function ProductList({
                   // Ungrouped products
                   <div className="space-y-1">
                     {group.products.length > 0 && groupedProducts.some(g => g.groupName) && (
-                      <div className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">
+                      <div className="px-3 py-2 text-xs font-medium text-secondary-400 uppercase tracking-wider">
                         {t('products.ungrouped')}
                       </div>
                     )}
@@ -158,7 +158,7 @@ export function ProductList({
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+          <div className="flex flex-col items-center justify-center py-12 text-secondary-400">
             <Box className="w-12 h-12 mb-3" />
             <p className="text-sm">
               {searchQuery ? t('products.noResults') : t('products.noProducts')}

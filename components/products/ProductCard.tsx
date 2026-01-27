@@ -16,12 +16,12 @@ export function ProductCard({ product, isSelected, onClick }: ProductCardProps) 
       className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all ${
         isSelected
           ? 'bg-primary-50 border-primary-200 border'
-          : 'hover:bg-slate-50 border border-transparent'
+          : 'hover:bg-secondary-50 border border-transparent'
       }`}
     >
       <div
         className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${
-          isSelected ? 'bg-primary-100' : 'bg-slate-100'
+          isSelected ? 'bg-primary-100' : 'bg-secondary-100'
         }`}
       >
         {product.image_url ? (
@@ -33,7 +33,7 @@ export function ProductCard({ product, isSelected, onClick }: ProductCardProps) 
         ) : (
           <Box
             className={`w-5 h-5 ${
-              isSelected ? 'text-primary-600' : 'text-slate-400'
+              isSelected ? 'text-primary-600' : 'text-secondary-400'
             }`}
           />
         )}
@@ -41,13 +41,13 @@ export function ProductCard({ product, isSelected, onClick }: ProductCardProps) 
       <div className="flex-1 min-w-0">
         <h3
           className={`font-medium truncate ${
-            isSelected ? 'text-primary-700' : 'text-slate-900'
+            isSelected ? 'text-primary-700' : 'text-secondary-900'
           }`}
         >
           {product.name}
         </h3>
         {product.description && (
-          <p className="text-sm text-slate-500 truncate">{product.description}</p>
+          <p className="text-sm text-secondary-500 truncate">{product.description}</p>
         )}
       </div>
     </button>

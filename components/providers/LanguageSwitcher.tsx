@@ -43,7 +43,7 @@ export function LanguageSwitcher({ direction = 'down' }: LanguageSwitcherProps) 
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+        className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100 rounded-lg transition-colors"
         aria-label="Select language"
         type="button"
       >
@@ -56,22 +56,22 @@ export function LanguageSwitcher({ direction = 'down' }: LanguageSwitcherProps) 
 
       {isOpen && (
         <div
-          className={`absolute left-0 ${dropdownPosition} py-2 w-40 bg-white rounded-lg shadow-lg border border-slate-200 z-[100]`}
+          className={`absolute left-0 ${dropdownPosition} py-2 w-40 bg-white rounded-lg shadow-lg border border-secondary-200 z-[100]`}
         >
           {languages.map((lang) => (
             <button
               key={lang.code}
               type="button"
               onClick={() => handleSelect(lang.code)}
-              className={`w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 transition-colors flex items-center justify-between ${
+              className={`w-full px-4 py-2.5 text-left text-sm hover:bg-secondary-50 transition-colors flex items-center justify-between ${
                 language === lang.code
-                  ? 'text-primary-600 font-medium bg-primary-50'
-                  : 'text-slate-700'
+                  ? 'text-primary-500 font-medium bg-primary-50'
+                  : 'text-secondary-700'
               }`}
             >
               <span>{lang.nativeName}</span>
               {language === lang.code && (
-                <Check className="w-4 h-4 text-primary-600" />
+                <Check className="w-4 h-4 text-primary-500" />
               )}
             </button>
           ))}
