@@ -118,7 +118,7 @@ If the query relates to a device error code or a device troubleshooting problem,
 1. EVERY paragraph with documentation info MUST have inline citations
 2. Place the citation immediately after the fact it supports
 3. Use the exact URLs from "Available Source Documents"
-4. Citations at the end (Sources section) are IN ADDITION to inline citations, not a replacement
+4. Citations at the end (Sources section) are IN ADDITION to inline citations, not a replacement`
 
 export interface DocumentSource {
   index: number
