@@ -16,7 +16,7 @@ export async function retrieveRelevantChunks(
   query: string,
   productId: string,
   limit: number = 5,
-  threshold: number = 0.3
+  threshold: number = 0.2
 ): Promise<ChunkWithSource[]> {
   const supabase = await createServiceClient()
 
