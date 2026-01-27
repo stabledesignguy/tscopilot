@@ -32,11 +32,24 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
       const urlParts = baseUrl.split('/')
       const filename = decodeURIComponent(urlParts[urlParts.length - 1] || 'document.pdf')
 
-      // Find source metadata for this URL
+      // Extract page number from URL hash (e.g., #page=45)
+      const hashMatch = href.match(/#page=(\d+)/)
+      const pageFromUrl = hashMatch ? parseInt(hashMatch[1], 10) : undefined
+
+      // Find source metadata for this URL (for search text highlighting)
       const source = findSourceByUrl(href)
 
+      // Build pageInfo, prioritizing the page from the URL
+      const pageInfo = pageFromUrl
+        ? {
+            pageNumbers: [pageFromUrl],
+            primaryPage: pageFromUrl,
+            searchText: source?.pageInfo?.searchText || ''
+          }
+        : source?.pageInfo
+
       // Open in custom PDF viewer with highlight info
-      openPDFViewer(baseUrl, filename, source?.pageInfo)
+      openPDFViewer(baseUrl, filename, pageInfo)
     }
     // Non-PDF links will open normally in new tab
   }, [openPDFViewer, findSourceByUrl])
