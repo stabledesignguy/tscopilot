@@ -158,6 +158,9 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
                       ),
                       a: ({ href, children }) => {
                         const isPDF = href?.split('#')[0].split('?')[0].toLowerCase().endsWith('.pdf')
+                        // Extract page number from URL hash if present
+                        const pageMatch = href?.match(/#page=(\d+)/)
+                        const pageNum = pageMatch ? pageMatch[1] : null
                         return (
                           <a
                             href={href}
@@ -169,7 +172,7 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
                             {children}
                             {isPDF && (
                               <span className="ml-1 text-xs text-yellow-600" title="Opens in PDF viewer with highlights">
-                                [PDF]
+                                {pageNum ? `[Page ${pageNum}]` : '[PDF]'}
                               </span>
                             )}
                           </a>
