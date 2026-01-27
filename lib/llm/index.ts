@@ -101,9 +101,46 @@ If the query relates to a device error code or a device troubleshooting problem,
 5. **Verify Accuracy:** Ensure the response is accurate and reflects the most up-to-date information available.
 6. **Retrieval:** Always retrieve your answer from the documentation.
 
-## Sources Section
+## Technical Support AI Citation Format Instructions
 
-End every response with a "Sources" section listing the documents and page numbers you referenced.`
+### Core Citation Requirements
+
+When providing answers based on technical documentation for medical devices, you MUST include precise source citations for every factual claim, procedure, specification, or recommendation. This is critical for regulatory compliance, safety verification, and user confidence. At a minimum this must include the name of the document / filename, the chapter, and the page number, or page number range(s).
+
+### Citation Format Structure
+
+Use the following standardized citation format:
+
+[Document Title, Section X.X.X "Section Name", Page XX]
+
+**Components Breakdown:**
+- **Document Title:** Full name of the document / file name
+- **Section Number:** Hierarchical section numbering (e.g., 3.2.1, A.4.2)
+- **Section Name:** Exact title of the section in quotes
+- **Page Number:** Specific page where information appears
+
+### Examples of Proper Citations
+
+**Single Source:**
+[Model XR-300 User Manual, Section 4.2 "Calibration Procedures", Page 47]
+
+**Range of Pages:**
+[Installation Guide, Section 3.4 "Network Configuration", Pages 23-25]
+
+**Warnings and Cautions:**
+⚠️ WARNING: [Safety Manual, Section 1.3 "Critical Safety Warnings", Page 7]
+
+### Quality Standards
+
+**Required Elements:**
+✅ Exact section numbers and names
+✅ Precise page numbers
+✅ Complete document titles
+
+**Avoid:**
+❌ Vague references like "the manual states..."
+❌ Approximate page numbers like "around page 50"
+❌ Missing section information`
 
 export interface DocumentSource {
   index: number
@@ -156,25 +193,64 @@ ${sources.map(s => {
 `
     : ''
 
-  // Citation rules for Sources section at end of response
+  // Detailed citation format instructions
   const citationRules = `
-## CRITICAL: Sources Section Requirement
+## Technical Support AI Citation Format Instructions
 
-You MUST end every response with a "Sources" section containing clickable links to the documents you referenced.
+### Core Citation Requirements
 
-**Requirements:**
-1. Use the exact URLs from "Available Source Documents" above
-2. Include the specific page number(s) where the information was found
-3. Append \`#page=X\` to each URL (where X is the page number)
+When providing answers based on technical documentation for medical devices, you MUST include precise source citations for every factual claim, procedure, specification, or recommendation. This is critical for regulatory compliance, safety verification, and user confidence. At a minimum this must include the name of the document / filename, the chapter, and the page number, or page number range(s).
 
-**Format:**
+### Citation Format Structure
+
+Use the following standardized citation format:
+
+[Document Title, Section X.X.X "Section Name", Page XX]
+
+**Components Breakdown:**
+- **Document Title:** Full name of the document / file name
+- **Section Number:** Hierarchical section numbering (e.g., 3.2.1, A.4.2)
+- **Section Name:** Exact title of the section in quotes
+- **Page Number:** Specific page where information appears
+
+### Examples of Proper Citations
+
+**Single Source:**
+[Model XR-300 User Manual, Section 4.2 "Calibration Procedures", Page 47]
+
+**Range of Pages:**
+[Installation Guide, Section 3.4 "Network Configuration", Pages 23-25]
+
+**Warnings and Cautions:**
+⚠️ WARNING: [Safety Manual, Section 1.3 "Critical Safety Warnings", Page 7]
+
+### Quality Standards
+
+**Required Elements:**
+✅ Exact section numbers and names
+✅ Precise page numbers
+✅ Complete document titles
+
+**Avoid:**
+❌ Vague references like "the manual states..."
+❌ Approximate page numbers like "around page 50"
+❌ Missing section information
+
+## CRITICAL: Footnotes Section Requirement
+
+You MUST end every response with a "Sources" section containing clickable links to the source documents. Use the exact URLs from the "Available Source Documents" section above.
+
+**IMPORTANT: Page-specific linking**
+To open the PDF to a specific page, append \`#page=X\` to the URL where X is the FIRST page number where the information was found.
+
+**Format for the Sources section:**
 
 ---
 
 **Sources:**
 
-1. [Filename, Page X](URL#page=X)
-2. [Filename, Pages X-Y](URL#page=X)
+1. [Document Filename, Section/Page info](exact_url_from_sources_list#page=FIRST_PAGE_NUMBER)
+2. [Another Document, Section/Page info](exact_url_from_sources_list#page=FIRST_PAGE_NUMBER)
 
 **Example:**
 
@@ -182,8 +258,12 @@ You MUST end every response with a "Sources" section containing clickable links 
 
 **Sources:**
 
-1. [Maintenance_Guide.pdf, Page 45](https://example.com/docs/maintenance.pdf#page=45)
-2. [User_Manual.pdf, Pages 12-15](https://example.com/docs/manual.pdf#page=12)
+1. [Maintenance_curative_Draeger_Primus.pdf, Section 3.2 "Error Codes", Page 45](https://example.supabase.co/storage/v1/object/public/documents/file.pdf#page=45)
+2. [User_Manual_Primus.pdf, Chapter 5 "Troubleshooting", Pages 89-92](https://example.supabase.co/storage/v1/object/public/documents/manual.pdf#page=89)
+
+Note: Always use \`#page=X\` at the end of the URL where X is the starting page number. This opens the PDF directly to that page.
+
+This Sources section with clickable links is MANDATORY for every response.
 `
 
   // If custom instructions are provided, use them as the base with RAG context appended
