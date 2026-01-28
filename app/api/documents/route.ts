@@ -1,5 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
+
+const ORG_STORAGE_KEY = 'tscopilot_current_org_id'
+
+// Helper to get current org ID from cookie
+async function getCurrentOrgId(): Promise<string | null> {
+  const cookieStore = await cookies()
+  return cookieStore.get(ORG_STORAGE_KEY)?.value || null
+}
 
 // Route segment config for App Router
 export const dynamic = 'force-dynamic'
@@ -18,10 +27,11 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const productId = searchParams.get('productId')
+    const orgId = searchParams.get('organizationId') || await getCurrentOrgId()
 
     let query = supabase
       .from('documents')
-      .select('*')
+      .select('*, products:products(id, name, organization_id)')
       .order('created_at', { ascending: false })
 
     if (productId) {
@@ -34,7 +44,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json({ documents })
+    // Filter by organization if provided
+    let filteredDocuments = documents || []
+    if (orgId) {
+      filteredDocuments = filteredDocuments.filter(
+        (doc: any) => doc.products?.organization_id === orgId
+      )
+    }
+
+    return NextResponse.json({ documents: filteredDocuments })
   } catch (error) {
     return NextResponse.json(
       { error: 'Internal server error' },
