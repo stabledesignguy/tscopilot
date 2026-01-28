@@ -105,6 +105,9 @@ export async function getOrgLLMConfig(
       .eq('organization_id', organizationId)
       .single()
 
+    console.log('getOrgLLMConfig: org_id:', organizationId)
+    console.log('getOrgLLMConfig: raw settings:', JSON.stringify(settings))
+
     if (error && error.code !== 'PGRST116') {
       console.error('Error fetching org LLM config:', error)
     }

@@ -220,11 +220,17 @@ export async function POST(request: NextRequest) {
     let orgLLMConfig = null
     if (organizationId) {
       orgLLMConfig = await getOrgLLMConfig(supabase, organizationId)
+      console.log('LLM Config: org_id:', organizationId)
+      console.log('LLM Config: provider from settings:', orgLLMConfig?.provider)
+      console.log('LLM Config: model from settings:', orgLLMConfig?.model)
+    } else {
+      console.log('LLM Config: No organization ID found')
     }
 
     // Generate streaming response
     // Priority: explicit param > org setting > platform default
     const provider: LLMProvider = llmProvider || orgLLMConfig?.provider || getDefaultProvider()
+    const model = orgLLMConfig?.model
 
     // Check if the provider is configured
     if (!isProviderConfigured(provider)) {
@@ -234,7 +240,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('LLM: Sending request to provider:', provider)
+    console.log('LLM: Sending request to provider:', provider, '| model:', model || 'default')
     console.log('LLM: System prompt length:', systemPrompt.length)
     console.log('LLM: Messages count:', messages.length)
 
@@ -242,7 +248,7 @@ export async function POST(request: NextRequest) {
     try {
       streamResult = await streamResponse(messages, systemPrompt, {
         provider,
-        model: orgLLMConfig?.model,
+        model,
       })
     } catch (llmError) {
       console.error('LLM stream error:', llmError)
