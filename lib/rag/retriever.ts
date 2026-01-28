@@ -27,12 +27,13 @@ export async function retrieveRelevantChunks(
 ): Promise<ChunkWithSource[]> {
   const supabase = createServiceClient()
 
-  // Extract keywords for hybrid search
+  // Extract keywords for hybrid search (remove punctuation, filter short words)
   const keywords = query
     .toLowerCase()
+    .replace(/[^\w\sàèéìòù]/g, ' ')  // Remove punctuation, keep Italian accents
     .split(/\s+/)
     .filter((k) => k.length > 3)
-    .slice(0, 8)
+    .slice(0, 10)
 
   console.log('Hybrid search: keywords:', keywords.join(', '))
 
@@ -83,14 +84,22 @@ export async function retrieveRelevantChunks(
     return fallbackTextSearch(query, productId, limit)
   }
 
-  // Get unique document IDs
-  const documentIds = Array.from(new Set(((vectorData || []) as any[]).map((item: any) => item.document_id)))
+  // Get unique document IDs from both vector and keyword results
+  const allDocIds = new Set<string>()
+  for (const item of (vectorData || []) as any[]) {
+    allDocIds.add(item.document_id)
+  }
+  for (const chunk of (keywordChunks || []) as any[]) {
+    if (keywordMatches.has(chunk.id)) {
+      allDocIds.add(chunk.document_id)
+    }
+  }
 
-  // Fetch document info
+  // Fetch document info for all relevant chunks
   const { data: documents } = await (supabase
     .from('documents') as any)
     .select('id, filename, file_url')
-    .in('id', documentIds)
+    .in('id', Array.from(allDocIds))
 
   const documentMap = new Map<string, DocumentSource>(
     (documents || []).map((doc: any) => [doc.id, doc as DocumentSource])
@@ -99,8 +108,8 @@ export async function retrieveRelevantChunks(
   // Hybrid scoring: combine vector similarity with keyword boost
   const hybridResults = ((vectorData || []) as any[]).map((item: any) => {
     const keywordBoost = keywordMatches.get(item.id) || 0
-    // Hybrid score: 70% vector similarity + 30% keyword match (with boost)
-    const hybridScore = (item.similarity * 0.7) + (keywordBoost * 0.5)
+    // Hybrid score: 50% vector similarity + 50% keyword match (prioritize exact matches)
+    const hybridScore = (item.similarity * 0.5) + (keywordBoost * 0.8)
 
     const metadata = item.metadata || {}
     const pageInfo: PageInfo | undefined = metadata.page_numbers
@@ -153,7 +162,7 @@ export async function retrieveRelevantChunks(
         chunk_index: chunk.chunk_index,
         metadata: chunk.metadata,
       } as DocumentChunk,
-      score: (keywordMatches.get(chunk.id) || 0) * 0.5,
+      score: (keywordMatches.get(chunk.id) || 0) * 0.8,
       vectorScore: 0,
       keywordScore: keywordMatches.get(chunk.id) || 0,
       document: documentMap.get(chunk.document_id),
