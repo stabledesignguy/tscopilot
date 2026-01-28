@@ -75,11 +75,15 @@ async function parsePDF(buffer: Buffer): Promise<string> {
 
 export async function parsePDFWithPages(buffer: Buffer): Promise<ParsedDocument> {
   const pages: PageContent[] = []
-  let currentCharPos = 0
+  const pageTexts: string[] = []
+  let currentPageNum = 0
 
-  // Custom page render function to capture text per page
+  // Custom page render function to capture text per page separately
   const options = {
     pagerender: function(pageData: any) {
+      currentPageNum++
+      const pageNum = currentPageNum
+
       return pageData.getTextContent().then(function(textContent: any) {
         let pageText = ''
         let lastY: number | null = null
@@ -92,6 +96,8 @@ export async function parsePDFWithPages(buffer: Buffer): Promise<ParsedDocument>
           lastY = item.transform[5]
         }
 
+        // Store with page number marker for later parsing
+        pageTexts[pageNum - 1] = pageText
         return pageText
       })
     }
@@ -99,35 +105,36 @@ export async function parsePDFWithPages(buffer: Buffer): Promise<ParsedDocument>
 
   try {
     const data = await pdf(buffer, options)
-
-    // pdf-parse returns numpages for total pages
     const totalPages = data.numpages || 1
 
-    // Parse the text by page markers or split evenly if no markers
-    // The custom pagerender concatenates pages with form feed characters
-    const rawText = data.text || ''
+    // Build pages array from collected page texts
+    let currentCharPos = 0
 
-    // Split by common page separators or process as single page
-    // pdf-parse with custom render typically joins pages
-    const pageTexts = rawText.split(/\f/).filter((t: string) => t.trim().length > 0)
-
+    // If pageTexts were collected, use them
     if (pageTexts.length > 0) {
       for (let i = 0; i < pageTexts.length; i++) {
-        const text = cleanText(pageTexts[i])
-        const charStart = currentCharPos
-        const charEnd = currentCharPos + text.length
+        const rawText = pageTexts[i] || ''
+        const text = cleanText(rawText)
 
-        pages.push({
-          pageNumber: i + 1,
-          text,
-          charStart,
-          charEnd
-        })
+        if (text.length > 0) {
+          const charStart = currentCharPos
+          const charEnd = currentCharPos + text.length
 
-        currentCharPos = charEnd + 1 // +1 for space between pages
+          pages.push({
+            pageNumber: i + 1,
+            text,
+            charStart,
+            charEnd
+          })
+
+          currentCharPos = charEnd + 1 // +1 for space between pages
+        }
       }
-    } else {
-      // Fallback: treat entire text as page 1
+    }
+
+    // Fallback if no pages collected
+    if (pages.length === 0) {
+      const rawText = data.text || ''
       const text = cleanText(rawText)
       pages.push({
         pageNumber: 1,
@@ -139,6 +146,8 @@ export async function parsePDFWithPages(buffer: Buffer): Promise<ParsedDocument>
 
     // Build full text by joining page texts
     const fullText = pages.map(p => p.text).join(' ')
+
+    console.log(`PDF parsed: ${pages.length} pages, ${fullText.length} chars`)
 
     return {
       fullText,
