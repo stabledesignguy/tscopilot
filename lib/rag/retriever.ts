@@ -27,12 +27,14 @@ export async function retrieveRelevantChunks(
 ): Promise<ChunkWithSource[]> {
   const supabase = createServiceClient()
 
-  // Extract keywords for hybrid search (remove punctuation, filter short words)
+  // Extract keywords for hybrid search (remove punctuation, filter short/common words)
+  const commonWords = new Set(['qual', 'quale', 'quali', 'cosa', 'come', 'dove', 'quando', 'perché', 'della', 'dello', 'delle', 'degli', 'nella', 'nello', 'nelle', 'negli', 'sono', 'essere', 'hanno', 'questa', 'questo', 'queste', 'questi', 'molto', 'anche', 'solo', 'ogni', 'tutto', 'tutti', 'prima', 'dopo', 'sempre', 'ancora', 'fatto', 'fare', 'macchina'])
+
   const keywords = query
     .toLowerCase()
     .replace(/[^\w\sàèéìòù]/g, ' ')  // Remove punctuation, keep Italian accents
     .split(/\s+/)
-    .filter((k) => k.length > 3)
+    .filter((k) => k.length > 3 && !commonWords.has(k))
     .slice(0, 10)
 
   console.log('Hybrid search: keywords:', keywords.join(', '))
@@ -108,8 +110,8 @@ export async function retrieveRelevantChunks(
   // Hybrid scoring: combine vector similarity with keyword boost
   const hybridResults = ((vectorData || []) as any[]).map((item: any) => {
     const keywordBoost = keywordMatches.get(item.id) || 0
-    // Hybrid score: 50% vector similarity + 50% keyword match (prioritize exact matches)
-    const hybridScore = (item.similarity * 0.5) + (keywordBoost * 0.8)
+    // Hybrid score: prioritize keyword matches heavily (they're now filtered to important terms)
+    const hybridScore = (item.similarity * 0.3) + (keywordBoost * 1.0)
 
     const metadata = item.metadata || {}
     const pageInfo: PageInfo | undefined = metadata.page_numbers
@@ -162,7 +164,7 @@ export async function retrieveRelevantChunks(
         chunk_index: chunk.chunk_index,
         metadata: chunk.metadata,
       } as DocumentChunk,
-      score: (keywordMatches.get(chunk.id) || 0) * 0.8,
+      score: (keywordMatches.get(chunk.id) || 0) * 1.0,
       vectorScore: 0,
       keywordScore: keywordMatches.get(chunk.id) || 0,
       document: documentMap.get(chunk.document_id),
