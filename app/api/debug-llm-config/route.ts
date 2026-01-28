@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    const { productId } = await request.json()
+    const { searchParams } = new URL(request.url)
+    const productId = searchParams.get('productId')
 
     if (!productId) {
       return NextResponse.json({ error: 'productId is required' }, { status: 400 })
