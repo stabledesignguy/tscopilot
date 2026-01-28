@@ -13,7 +13,6 @@ export default function HomePage() {
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [llmProvider, setLlmProvider] = useState<LLMProvider>('claude')
   const [sourceMetadata, setSourceMetadata] = useState<SourceMetadata[]>([])
   const { t } = useTranslation()
 
@@ -95,7 +94,7 @@ export default function HomePage() {
             message: content,
             conversationId,
             productId: selectedProduct.id,
-            llmProvider,
+            // Don't send llmProvider - let org settings take effect
           }),
         })
 
@@ -110,7 +109,7 @@ export default function HomePage() {
         }
 
         const provider =
-          (response.headers.get('X-LLM-Provider') as LLMProvider) || llmProvider
+          (response.headers.get('X-LLM-Provider') as LLMProvider) || 'claude'
 
         // Extract source metadata from header for PDF highlighting
         const sourceMetadataHeader = response.headers.get('X-Source-Metadata')
@@ -162,7 +161,7 @@ export default function HomePage() {
         setIsLoading(false)
       }
     },
-    [selectedProduct, conversationId, llmProvider]
+    [selectedProduct, conversationId]
   )
 
   const handleExport = useCallback(() => {
@@ -225,7 +224,6 @@ export default function HomePage() {
           onExport={handleExport}
           onClear={handleClear}
           isLoading={isLoading}
-          llmProvider={llmProvider}
           onBack={handleBackToProducts}
           sourceMetadata={sourceMetadata}
         />
