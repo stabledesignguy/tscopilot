@@ -55,8 +55,6 @@ export async function streamOpenAIResponse(
 ): Promise<StreamingLLMResponse> {
   const model = options?.model || DEFAULT_MODEL
 
-  console.log('OpenAI: Starting stream request with model:', model)
-
   const formattedMessages: OpenAI.ChatCompletionMessageParam[] = []
 
   if (systemPrompt) {
@@ -70,40 +68,27 @@ export async function streamOpenAIResponse(
     })
   })
 
-  console.log('OpenAI: Sending', formattedMessages.length, 'messages')
-
-  let stream
-  try {
-    stream = await openai.chat.completions.create({
-      model,
-      messages: formattedMessages,
-      max_tokens: options?.maxTokens || 4096,
-      temperature: options?.temperature ?? 0.7,
-      stream: true,
-    })
-    console.log('OpenAI: Stream created successfully')
-  } catch (error) {
-    console.error('OpenAI: Error creating stream:', error)
-    throw error
-  }
+  const stream = await openai.chat.completions.create({
+    model,
+    messages: formattedMessages,
+    max_tokens: options?.maxTokens || 4096,
+    temperature: options?.temperature ?? 0.7,
+    stream: true,
+  })
 
   const encoder = new TextEncoder()
 
   const readableStream = new ReadableStream({
     async start(controller) {
-      let chunkCount = 0
       try {
         for await (const chunk of stream) {
           const content = chunk.choices[0]?.delta?.content
           if (content) {
-            chunkCount++
             controller.enqueue(encoder.encode(content))
           }
         }
-        console.log('OpenAI: Stream completed with', chunkCount, 'chunks')
         controller.close()
       } catch (error) {
-        console.error('OpenAI: Stream error:', error)
         controller.error(error)
       }
     },
