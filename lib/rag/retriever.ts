@@ -19,6 +19,7 @@ export interface ChunkWithSource extends ChunkWithScore {
   pageInfo?: PageInfo
 }
 
+// RETRIEVER VERSION: v4-keyword-priority
 export async function retrieveRelevantChunks(
   query: string,
   productId: string,
@@ -37,7 +38,7 @@ export async function retrieveRelevantChunks(
     .filter((k) => k.length > 3 && !commonWords.has(k))
     .slice(0, 10)
 
-  console.log('Hybrid search: keywords:', keywords.join(', '))
+  console.log('RETRIEVER v4: keywords:', keywords.join(', '))
 
   // Generate embedding for the query
   const queryEmbedding = await generateEmbeddings(query)
@@ -74,7 +75,13 @@ export async function retrieveRelevantChunks(
       }
     }
   }
-  console.log('Keyword search: found', keywordMatches.size, 'chunks with keyword matches')
+  console.log('RETRIEVER v4: Keyword search found', keywordMatches.size, 'chunks with keyword matches')
+
+  // Log top keyword matches for debugging
+  const topKeywordMatches = Array.from(keywordMatches.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+  console.log('RETRIEVER v4: Top 5 keyword matches:', topKeywordMatches.map(([id, score]) => `${score.toFixed(2)}`).join(', '))
 
   if (error) {
     console.error('Vector search error:', error)
@@ -140,12 +147,17 @@ export async function retrieveRelevantChunks(
   })
 
   // Also add keyword-only matches that weren't in vector results
+  // IMPORTANT: Sort by keyword score before slicing to ensure best matches are included
   const vectorIds = new Set(hybridResults.map(r => r.chunk.id))
   const keywordOnlyChunks = (keywordChunks || [])
     .filter((c: any) => !vectorIds.has(c.id) && keywordMatches.has(c.id))
+    .sort((a: any, b: any) => (keywordMatches.get(b.id) || 0) - (keywordMatches.get(a.id) || 0))
     .slice(0, limit)
 
+  console.log('RETRIEVER v4: Adding', keywordOnlyChunks.length, 'keyword-only chunks')
+
   for (const chunk of keywordOnlyChunks) {
+    const keywordScore = keywordMatches.get(chunk.id) || 0
     const metadata = chunk.metadata || {}
     const pageInfo: PageInfo | undefined = metadata.page_numbers
       ? {
@@ -154,6 +166,11 @@ export async function retrieveRelevantChunks(
           searchText: metadata.search_text || chunk.content?.slice(0, 150) || ''
         }
       : undefined
+
+    // Log high-scoring keyword-only chunks
+    if (keywordScore >= 0.8) {
+      console.log('RETRIEVER v4: High-score keyword-only chunk:', keywordScore.toFixed(2), '- preview:', chunk.content.slice(0, 100))
+    }
 
     hybridResults.push({
       chunk: {
@@ -164,9 +181,9 @@ export async function retrieveRelevantChunks(
         chunk_index: chunk.chunk_index,
         metadata: chunk.metadata,
       } as DocumentChunk,
-      score: (keywordMatches.get(chunk.id) || 0) * 1.0,
+      score: keywordScore * 1.0,
       vectorScore: 0,
-      keywordScore: keywordMatches.get(chunk.id) || 0,
+      keywordScore: keywordScore,
       document: documentMap.get(chunk.document_id),
       pageInfo
     })
