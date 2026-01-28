@@ -112,9 +112,10 @@ export function OrganizationProvider({
 
         setCurrentOrgSettings(settingsData)
 
-        // Store in localStorage
+        // Store in localStorage and cookie (cookie is used by server-side APIs)
         if (typeof window !== 'undefined') {
           localStorage.setItem(ORG_STORAGE_KEY, targetOrg.id)
+          document.cookie = `${ORG_STORAGE_KEY}=${targetOrg.id}; path=/; max-age=31536000; SameSite=Lax`
         }
       }
     } catch (err) {
@@ -149,9 +150,10 @@ export function OrganizationProvider({
       setCurrentMembership(targetMembership || null)
       setCurrentOrgSettings(settingsData)
 
-      // Store in localStorage
+      // Store in localStorage and cookie (cookie is used by server-side APIs)
       if (typeof window !== 'undefined') {
         localStorage.setItem(ORG_STORAGE_KEY, orgId)
+        document.cookie = `${ORG_STORAGE_KEY}=${orgId}; path=/; max-age=31536000; SameSite=Lax`
       }
     } catch (err) {
       console.error('Failed to switch organization:', err)

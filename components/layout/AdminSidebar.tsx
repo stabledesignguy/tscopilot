@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { useTranslation } from '@/lib/i18n/useTranslation'
 import { LanguageSwitcher } from '@/components/providers/LanguageSwitcher'
+import { OrgSwitcher } from './OrgSwitcher'
 
 export function AdminSidebar() {
   const { t } = useTranslation()
@@ -43,6 +44,10 @@ export function AdminSidebar() {
         />
         <h2 className="text-lg font-bold text-secondary-700">{t('admin.panelTitle')}</h2>
         <p className="text-sm text-secondary-400">{t('admin.panelSubtitle')}</p>
+      </div>
+
+      <div className="px-4 py-3 border-b border-secondary-200">
+        <OrgSwitcher />
       </div>
 
       <nav className="flex-1 p-4">

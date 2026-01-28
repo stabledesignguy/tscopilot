@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { AdminSidebar } from '@/components/layout/AdminSidebar'
+import { OrganizationProviderWrapper } from '@/components/providers/OrganizationProviderWrapper'
 
 export default async function AdminLayout({
   children,
@@ -19,7 +20,7 @@ export default async function AdminLayout({
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('role, is_super_admin')
     .eq('id', user.id)
     .single()
 
@@ -27,13 +28,17 @@ export default async function AdminLayout({
     redirect('/')
   }
 
-  return (
-    <div className="min-h-screen bg-secondary-50 flex">
-      {/* Sidebar */}
-      <AdminSidebar />
+  const isSuperAdmin = (profile as { is_super_admin?: boolean } | null)?.is_super_admin ?? false
 
-      {/* Main content */}
-      <main className="flex-1 overflow-auto">{children}</main>
-    </div>
+  return (
+    <OrganizationProviderWrapper userId={user.id} isSuperAdmin={isSuperAdmin}>
+      <div className="min-h-screen bg-secondary-50 flex">
+        {/* Sidebar */}
+        <AdminSidebar />
+
+        {/* Main content */}
+        <main className="flex-1 overflow-auto">{children}</main>
+      </div>
+    </OrganizationProviderWrapper>
   )
 }
