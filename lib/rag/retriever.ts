@@ -54,12 +54,12 @@ export async function retrieveRelevantChunks(
     filter_product_id: productId,
   })
 
-  // Also do keyword search
+  // Also do keyword search (scan all chunks for this product)
   const { data: keywordChunks } = await (supabase
     .from('document_chunks') as any)
     .select('id, document_id, content, chunk_index, metadata')
     .eq('product_id', productId)
-    .limit(200)
+    .limit(1000)
 
   // Build a map of keyword matches
   const keywordMatches = new Map<string, number>()
