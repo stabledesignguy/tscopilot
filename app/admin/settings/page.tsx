@@ -3,9 +3,25 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
 import { Settings, Loader2, Check, Bot } from 'lucide-react'
 import type { OrganizationSettings, LLMProvider } from '@/types'
+
+// Model configurations per provider
+const MODEL_OPTIONS: Record<LLMProvider, { id: string; name: string; isDefault?: boolean }[]> = {
+  claude: [
+    { id: 'claude-sonnet-4-20250514', name: 'Claude Sonnet 4 (default)', isDefault: true },
+    { id: 'claude-opus-4-5-20251101', name: 'Claude Opus 4.5' },
+    { id: 'claude-opus-4-20250514', name: 'Claude Opus 4' },
+  ],
+  openai: [
+    { id: 'gpt-4o', name: 'GPT-4o', isDefault: true },
+    { id: 'gpt-5.2', name: 'GPT-5.2' },
+    { id: 'gpt-4o-mini', name: 'GPT-4o Mini' },
+  ],
+  gemini: [
+    { id: 'gemini-pro', name: 'Gemini Pro', isDefault: true },
+  ],
+}
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<Partial<OrganizationSettings>>({})
@@ -119,16 +135,17 @@ export default function AdminSettingsPage() {
                   setSettings({
                     ...settings,
                     llm_provider: (e.target.value || null) as LLMProvider | null,
+                    llm_model: null, // Clear model when provider changes
                   })
                 }
                 className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               >
-                <option value="">Use Platform Default</option>
+                <option value="">Use Platform Default (Claude Sonnet 4)</option>
                 {configuredProviders.includes('claude') && (
                   <option value="claude">Claude (Anthropic)</option>
                 )}
                 {configuredProviders.includes('openai') && (
-                  <option value="openai">GPT-4 (OpenAI)</option>
+                  <option value="openai">ChatGPT (OpenAI)</option>
                 )}
                 {configuredProviders.includes('gemini') && (
                   <option value="gemini">Gemini (Google)</option>
@@ -139,22 +156,30 @@ export default function AdminSettingsPage() {
               </p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-secondary-700 mb-1">
-                Model Name (Optional)
-              </label>
-              <Input
-                type="text"
-                value={settings.llm_model || ''}
-                onChange={(e) =>
-                  setSettings({ ...settings, llm_model: e.target.value || null })
-                }
-                placeholder="e.g., claude-3-opus-20240229"
-              />
-              <p className="text-xs text-secondary-500 mt-1">
-                Specify a particular model version, or leave empty for default
-              </p>
-            </div>
+            {settings.llm_provider && (
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 mb-1">
+                  Model
+                </label>
+                <select
+                  value={settings.llm_model || ''}
+                  onChange={(e) =>
+                    setSettings({ ...settings, llm_model: e.target.value || null })
+                  }
+                  className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                >
+                  <option value="">Use Provider Default</option>
+                  {MODEL_OPTIONS[settings.llm_provider]?.map((model) => (
+                    <option key={model.id} value={model.id}>
+                      {model.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-secondary-500 mt-1">
+                  Select a model or leave empty to use the provider&apos;s default
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
