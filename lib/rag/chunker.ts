@@ -120,65 +120,99 @@ export function chunkTextWithPages(
   text: string,
   options: ChunkWithPagesOptions
 ): ChunkWithPageInfo[] {
-  const { pages, chunkSize, chunkOverlap, separators = defaultSeparators } = options
+  const { pages, chunkSize, chunkOverlap } = options
 
-  // First, get the raw chunks using existing chunking logic
-  const rawChunks = chunkText(text, { chunkSize, chunkOverlap, separators })
+  // Build chunks directly from pages to ensure accurate page tracking
+  const chunks: ChunkWithPageInfo[] = []
 
-  // Track position in the full text
-  let searchStartPos = 0
-
-  return rawChunks.map((chunkContent) => {
-    // Find where this chunk starts in the full text
-    const chunkStartInText = text.indexOf(chunkContent, searchStartPos)
-    const chunkEndInText = chunkStartInText + chunkContent.length
-
-    // Update search position for next chunk (accounting for overlap)
-    if (chunkStartInText !== -1) {
-      searchStartPos = Math.max(searchStartPos, chunkStartInText + 1)
+  // Create a mapping of character position to page number
+  const charToPage = new Map<number, number>()
+  for (const page of pages) {
+    for (let i = page.charStart; i < page.charEnd; i++) {
+      charToPage.set(i, page.pageNumber)
     }
+  }
 
-    // Determine which pages this chunk spans
-    const pageNumbers: number[] = []
-
-    for (const page of pages) {
-      // Check if chunk overlaps with this page
-      // A chunk overlaps if its start is before the page end AND its end is after the page start
-      if (chunkStartInText < page.charEnd && chunkEndInText > page.charStart) {
-        pageNumbers.push(page.pageNumber)
-      }
+  // Helper to get page numbers for a character range
+  function getPagesForRange(start: number, end: number): number[] {
+    const pageSet = new Set<number>()
+    // Sample positions to determine pages (every 100 chars for efficiency)
+    for (let i = start; i < end; i += 100) {
+      const page = charToPage.get(i)
+      if (page) pageSet.add(page)
     }
+    // Also check start and end positions
+    const startPage = charToPage.get(start)
+    const endPage = charToPage.get(Math.max(start, end - 1))
+    if (startPage) pageSet.add(startPage)
+    if (endPage) pageSet.add(endPage)
 
-    // If no pages found (shouldn't happen), default to page 1
-    if (pageNumbers.length === 0) {
-      pageNumbers.push(1)
-    }
+    const result = Array.from(pageSet).sort((a, b) => a - b)
+    return result.length > 0 ? result : [1]
+  }
 
-    // Primary page is the one with the most content in this chunk
-    let primaryPage = pageNumbers[0]
-    let maxOverlap = 0
+  // Chunk with position tracking
+  let currentPos = 0
+  while (currentPos < text.length) {
+    // Find a good break point
+    let endPos = Math.min(currentPos + chunkSize, text.length)
 
-    for (const pageNum of pageNumbers) {
-      const page = pages.find((p) => p.pageNumber === pageNum)
-      if (page) {
-        const overlapStart = Math.max(chunkStartInText, page.charStart)
-        const overlapEnd = Math.min(chunkEndInText, page.charEnd)
-        const overlap = overlapEnd - overlapStart
-        if (overlap > maxOverlap) {
-          maxOverlap = overlap
-          primaryPage = pageNum
+    // Try to break at a paragraph or sentence boundary
+    if (endPos < text.length) {
+      // Look for paragraph break
+      const paragraphBreak = text.lastIndexOf('\n\n', endPos)
+      if (paragraphBreak > currentPos + chunkSize * 0.5) {
+        endPos = paragraphBreak
+      } else {
+        // Look for sentence break
+        const sentenceBreak = text.lastIndexOf('. ', endPos)
+        if (sentenceBreak > currentPos + chunkSize * 0.5) {
+          endPos = sentenceBreak + 1
         }
       }
     }
 
-    // Extract search text (first 150 chars for text matching)
-    const searchText = chunkContent.slice(0, 150).trim()
+    const chunkContent = text.slice(currentPos, endPos).trim()
 
-    return {
-      content: chunkContent,
-      pageNumbers,
-      primaryPage,
-      searchText
+    if (chunkContent.length > 0) {
+      const pageNumbers = getPagesForRange(currentPos, endPos)
+
+      // Primary page is the one covering most of the chunk
+      const pageCounts = new Map<number, number>()
+      for (let i = currentPos; i < endPos; i += 50) {
+        const page = charToPage.get(i)
+        if (page) {
+          pageCounts.set(page, (pageCounts.get(page) || 0) + 1)
+        }
+      }
+
+      let primaryPage = pageNumbers[0]
+      let maxCount = 0
+      for (const [page, count] of pageCounts) {
+        if (count > maxCount) {
+          maxCount = count
+          primaryPage = page
+        }
+      }
+
+      chunks.push({
+        content: chunkContent,
+        pageNumbers,
+        primaryPage,
+        searchText: chunkContent.slice(0, 150).trim()
+      })
     }
-  })
+
+    // Move to next position with overlap
+    const nextPos = endPos - chunkOverlap
+    if (nextPos <= currentPos) {
+      currentPos = endPos // Prevent infinite loop
+    } else {
+      currentPos = nextPos
+    }
+  }
+
+  console.log(`Chunked into ${chunks.length} chunks with page tracking`)
+
+  return chunks
 }
