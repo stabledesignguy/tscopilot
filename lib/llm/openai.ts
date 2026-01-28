@@ -7,6 +7,13 @@ const openai = new OpenAI({
 
 const DEFAULT_MODEL = 'gpt-4o'
 
+// Models that use max_completion_tokens instead of max_tokens
+const COMPLETION_TOKENS_MODELS = ['gpt-5.2', 'o1', 'o1-mini', 'o1-preview']
+
+function usesCompletionTokens(model: string): boolean {
+  return COMPLETION_TOKENS_MODELS.some(m => model.startsWith(m))
+}
+
 export async function generateOpenAIResponse(
   messages: LLMMessage[],
   systemPrompt?: string,
@@ -27,10 +34,14 @@ export async function generateOpenAIResponse(
     })
   })
 
+  const tokenParam = usesCompletionTokens(model)
+    ? { max_completion_tokens: options?.maxTokens || 4096 }
+    : { max_tokens: options?.maxTokens || 4096 }
+
   const response = await openai.chat.completions.create({
     model,
     messages: formattedMessages,
-    max_tokens: options?.maxTokens || 4096,
+    ...tokenParam,
     temperature: options?.temperature ?? 0.7,
   })
 
@@ -68,10 +79,14 @@ export async function streamOpenAIResponse(
     })
   })
 
+  const tokenParam = usesCompletionTokens(model)
+    ? { max_completion_tokens: options?.maxTokens || 4096 }
+    : { max_tokens: options?.maxTokens || 4096 }
+
   const stream = await openai.chat.completions.create({
     model,
     messages: formattedMessages,
-    max_tokens: options?.maxTokens || 4096,
+    ...tokenParam,
     temperature: options?.temperature ?? 0.7,
     stream: true,
   })
