@@ -240,6 +240,8 @@ export interface DocumentSource {
   index: number
   filename: string
   url: string
+  primaryPage?: number
+  pageNumbers?: number[]
 }
 
 /**
@@ -301,13 +303,17 @@ export function buildRAGPrompt(
   sources: DocumentSource[] = [],
   customInstructions?: string
 ): string {
-  // Build sources reference section
+  // Build sources reference section with page-specific URLs
   const sourcesSection = sources.length > 0
     ? `
 ## Available Source Documents
-The following source documents are available for citation. Use the exact URLs provided when creating footnote links:
+The following source documents are available for citation. Use the exact URLs provided (including #page=X) when creating footnote links:
 
-${sources.map(s => `- **[${s.index}]** ${s.filename}: ${s.url}`).join('\n')}
+${sources.map(s => {
+  const pageFragment = s.primaryPage ? `#page=${s.primaryPage}` : ''
+  const pageInfo = s.primaryPage ? ` (Page ${s.primaryPage})` : ''
+  return `- **[${s.index}]** ${s.filename}${pageInfo}: ${s.url}${pageFragment}`
+}).join('\n')}
 `
     : ''
 
@@ -329,6 +335,8 @@ ${context}
 4. **Practical Examples**: When helpful, provide examples of how to apply the information.
 5. **Acknowledge Limitations**: If the documentation doesn't fully answer the question, say so honestly.
 6. **Stay On Topic**: Focus on ${productName} and the user's specific question.
+7. **Direct Answers Only**: Answer the specific question asked. Do NOT include unrelated tables, data, or sections from the documentation even if they appear near the relevant information. If a table is incomplete or empty, do not include it.
+8. **Concise Responses**: Provide the direct answer first, then supporting details if needed. Avoid padding responses with tangential information.
 
 ## CRITICAL: Footnotes Section Requirement
 
@@ -450,6 +458,8 @@ If source information is incomplete:
 4. **Practical Examples**: When helpful, provide examples of how to apply the information.
 5. **Acknowledge Limitations**: If the documentation doesn't fully answer the question, say so honestly.
 6. **Stay On Topic**: Focus on ${productName} and the user's specific question.
+7. **Direct Answers Only**: Answer the specific question asked. Do NOT include unrelated tables, data, or sections from the documentation even if they appear near the relevant information. If a table is incomplete or empty, do not include it.
+8. **Concise Responses**: Provide the direct answer first, then supporting details if needed. Avoid padding responses with tangential information.
 
 ## CRITICAL: Footnotes Section Requirement
 
