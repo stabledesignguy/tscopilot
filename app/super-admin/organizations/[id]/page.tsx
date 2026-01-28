@@ -24,9 +24,17 @@ import {
 import Link from 'next/link'
 import type { Organization, OrganizationSettings, OrganizationMember, User as UserType, LLMProvider } from '@/types'
 
+interface Product {
+  id: string
+  name: string
+  description: string | null
+  created_at: string
+}
+
 interface OrgDetails extends Organization {
   settings?: OrganizationSettings
   members?: (OrganizationMember & { user: UserType })[]
+  products?: Product[]
   stats?: {
     products: number
     documents: number
@@ -277,62 +285,107 @@ export default function OrganizationDetailsPage() {
 
       {/* Tab Content */}
       {activeTab === 'overview' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Stats */}
-          <div className="lg:col-span-2 grid grid-cols-3 gap-4">
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Stats */}
+            <div className="lg:col-span-2 grid grid-cols-3 gap-4">
+              <Card>
+                <CardContent className="py-6 text-center">
+                  <Users className="w-8 h-8 text-blue-500 mx-auto mb-2" />
+                  <p className="text-2xl font-bold text-slate-900">
+                    {org.members?.length || 0}
+                  </p>
+                  <p className="text-sm text-slate-500">Members</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="py-6 text-center">
+                  <Package className="w-8 h-8 text-green-500 mx-auto mb-2" />
+                  <p className="text-2xl font-bold text-slate-900">
+                    {org.stats?.products || 0}
+                  </p>
+                  <p className="text-sm text-slate-500">Products</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="py-6 text-center">
+                  <FileText className="w-8 h-8 text-purple-500 mx-auto mb-2" />
+                  <p className="text-2xl font-bold text-slate-900">
+                    {org.stats?.documents || 0}
+                  </p>
+                  <p className="text-sm text-slate-500">Documents</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Quick Info */}
             <Card>
-              <CardContent className="py-6 text-center">
-                <Users className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-slate-900">
-                  {org.members?.length || 0}
-                </p>
-                <p className="text-sm text-slate-500">Members</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="py-6 text-center">
-                <Package className="w-8 h-8 text-green-500 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-slate-900">
-                  {org.stats?.products || 0}
-                </p>
-                <p className="text-sm text-slate-500">Products</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="py-6 text-center">
-                <FileText className="w-8 h-8 text-purple-500 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-slate-900">
-                  {org.stats?.documents || 0}
-                </p>
-                <p className="text-sm text-slate-500">Documents</p>
+              <CardHeader>
+                <h3 className="font-semibold text-slate-900">Organization Info</h3>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <p className="text-xs text-slate-500 uppercase tracking-wide">Created</p>
+                  <p className="text-sm text-slate-900">
+                    {new Date(org.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 uppercase tracking-wide">LLM Provider</p>
+                  <p className="text-sm text-slate-900 capitalize">
+                    {org.settings?.llm_provider || 'Default'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 uppercase tracking-wide">Max Users</p>
+                  <p className="text-sm text-slate-900">
+                    {org.settings?.max_users || 50}
+                  </p>
+                </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Quick Info */}
+          {/* Products List */}
           <Card>
             <CardHeader>
-              <h3 className="font-semibold text-slate-900">Organization Info</h3>
+              <h3 className="font-semibold text-slate-900">
+                Products ({org.products?.length || 0})
+              </h3>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="text-xs text-slate-500 uppercase tracking-wide">Created</p>
-                <p className="text-sm text-slate-900">
-                  {new Date(org.created_at).toLocaleDateString()}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-500 uppercase tracking-wide">LLM Provider</p>
-                <p className="text-sm text-slate-900 capitalize">
-                  {org.settings?.llm_provider || 'Default'}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-500 uppercase tracking-wide">Max Users</p>
-                <p className="text-sm text-slate-900">
-                  {org.settings?.max_users || 50}
-                </p>
-              </div>
+            <CardContent>
+              {org.products && org.products.length > 0 ? (
+                <div className="divide-y divide-slate-200">
+                  {org.products.map((product) => (
+                    <div key={product.id} className="py-3 first:pt-0 last:pb-0">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <Package className="w-4 h-4 text-green-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-slate-900">{product.name}</p>
+                          {product.description && (
+                            <p className="text-sm text-slate-500 truncate">
+                              {product.description}
+                            </p>
+                          )}
+                          <p className="text-xs text-slate-400 mt-1">
+                            Created {new Date(product.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Package className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                  <p className="text-slate-500">No products yet</p>
+                  <p className="text-sm text-slate-400 mt-1">
+                    Products are managed by organization admins
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

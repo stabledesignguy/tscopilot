@@ -68,16 +68,19 @@ export async function GET(
       user: (profiles || []).find((p: any) => p.id === member.user_id) || null,
     }))
 
+    // Get products for this organization
+    const { data: products } = await (serviceClient
+      .from('products') as any)
+      .select('id, name, description, created_at')
+      .eq('organization_id', id)
+      .order('name', { ascending: true })
+
     // Get stats
-    const [productsCount, documentsCount, conversationsCount] = await Promise.all([
-      (serviceClient
-        .from('products') as any)
-        .select('id', { count: 'exact', head: true })
-        .eq('organization_id', id),
+    const [documentsCount, conversationsCount] = await Promise.all([
       (serviceClient
         .from('documents') as any)
         .select('id', { count: 'exact', head: true })
-        .eq('product_id', id), // This needs to be updated for org filtering
+        .eq('organization_id', id),
       (serviceClient
         .from('conversations') as any)
         .select('id', { count: 'exact', head: true })
@@ -88,8 +91,9 @@ export async function GET(
       ...(org as object),
       settings,
       members: membersWithProfiles,
+      products: products || [],
       stats: {
-        products: productsCount.count || 0,
+        products: (products || []).length,
         documents: documentsCount.count || 0,
         conversations: conversationsCount.count || 0,
       },
