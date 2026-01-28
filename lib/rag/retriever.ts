@@ -27,41 +27,66 @@ export async function retrieveRelevantChunks(
 ): Promise<ChunkWithSource[]> {
   const supabase = createServiceClient()
 
+  // Extract keywords for hybrid search
+  const keywords = query
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((k) => k.length > 3)
+    .slice(0, 8)
+
+  console.log('Hybrid search: keywords:', keywords.join(', '))
+
   // Generate embedding for the query
   const queryEmbedding = await generateEmbeddings(query)
 
   // Use pgvector similarity search
-  // This requires the match_documents function to be created in Supabase
   console.log('Vector search: filtering by product_id:', productId)
 
   // Format embedding as a string for PostgreSQL vector type
-  // Use 9 decimal places to match PostgreSQL's vector::text format
   const embeddingString = `[${queryEmbedding.map(v => v.toFixed(9)).join(',')}]`
 
-  const { data, error } = await (supabase as any).rpc('match_documents', {
+  // Get more results for hybrid re-ranking
+  const { data: vectorData, error } = await (supabase as any).rpc('match_documents', {
     query_embedding: embeddingString,
     match_threshold: threshold,
-    match_count: limit,
+    match_count: limit * 3,
     filter_product_id: productId,
   })
 
+  // Also do keyword search
+  const { data: keywordChunks } = await (supabase
+    .from('document_chunks') as any)
+    .select('id, document_id, content, chunk_index, metadata')
+    .eq('product_id', productId)
+    .limit(200)
+
+  // Build a map of keyword matches
+  const keywordMatches = new Map<string, number>()
+  if (keywordChunks && keywords.length > 0) {
+    for (const chunk of keywordChunks) {
+      const content = chunk.content.toLowerCase()
+      const matchCount = keywords.filter((k: string) => content.includes(k)).length
+      if (matchCount > 0) {
+        keywordMatches.set(chunk.id, matchCount / keywords.length)
+      }
+    }
+  }
+  console.log('Keyword search: found', keywordMatches.size, 'chunks with keyword matches')
+
   if (error) {
     console.error('Vector search error:', error)
-    console.log('Falling back to text search for product:', productId)
-    // Fallback to basic text search if vector search fails
     return fallbackTextSearch(query, productId, limit)
   }
 
-  // Fallback to text search if vector search returns no results
-  if (!data || (data as any[]).length === 0) {
-    console.log('Vector search returned no results, falling back to text search for product:', productId)
+  if (!vectorData || (vectorData as any[]).length === 0) {
+    console.log('Vector search returned no results, falling back to text search')
     return fallbackTextSearch(query, productId, limit)
   }
 
   // Get unique document IDs
-  const documentIds = Array.from(new Set(((data || []) as any[]).map((item: any) => item.document_id)))
+  const documentIds = Array.from(new Set(((vectorData || []) as any[]).map((item: any) => item.document_id)))
 
-  // Fetch document info for all chunks
+  // Fetch document info
   const { data: documents } = await (supabase
     .from('documents') as any)
     .select('id, filename, file_url')
@@ -71,8 +96,12 @@ export async function retrieveRelevantChunks(
     (documents || []).map((doc: any) => [doc.id, doc as DocumentSource])
   )
 
-  return ((data || []) as any[]).map((item: any) => {
-    // Extract page info from metadata if available
+  // Hybrid scoring: combine vector similarity with keyword boost
+  const hybridResults = ((vectorData || []) as any[]).map((item: any) => {
+    const keywordBoost = keywordMatches.get(item.id) || 0
+    // Hybrid score: 70% vector similarity + 30% keyword match (with boost)
+    const hybridScore = (item.similarity * 0.7) + (keywordBoost * 0.5)
+
     const metadata = item.metadata || {}
     const pageInfo: PageInfo | undefined = metadata.page_numbers
       ? {
@@ -91,11 +120,55 @@ export async function retrieveRelevantChunks(
         chunk_index: item.chunk_index,
         metadata: item.metadata,
       } as DocumentChunk,
-      score: item.similarity,
+      score: hybridScore,
+      vectorScore: item.similarity,
+      keywordScore: keywordBoost,
       document: documentMap.get(item.document_id),
       pageInfo
     }
   })
+
+  // Also add keyword-only matches that weren't in vector results
+  const vectorIds = new Set(hybridResults.map(r => r.chunk.id))
+  const keywordOnlyChunks = (keywordChunks || [])
+    .filter((c: any) => !vectorIds.has(c.id) && keywordMatches.has(c.id))
+    .slice(0, limit)
+
+  for (const chunk of keywordOnlyChunks) {
+    const metadata = chunk.metadata || {}
+    const pageInfo: PageInfo | undefined = metadata.page_numbers
+      ? {
+          pageNumbers: metadata.page_numbers,
+          primaryPage: metadata.primary_page || metadata.page_numbers[0] || 1,
+          searchText: metadata.search_text || chunk.content?.slice(0, 150) || ''
+        }
+      : undefined
+
+    hybridResults.push({
+      chunk: {
+        id: chunk.id,
+        document_id: chunk.document_id,
+        content: chunk.content,
+        embedding: [],
+        chunk_index: chunk.chunk_index,
+        metadata: chunk.metadata,
+      } as DocumentChunk,
+      score: (keywordMatches.get(chunk.id) || 0) * 0.5,
+      vectorScore: 0,
+      keywordScore: keywordMatches.get(chunk.id) || 0,
+      document: documentMap.get(chunk.document_id),
+      pageInfo
+    })
+  }
+
+  // Sort by hybrid score and return top results
+  hybridResults.sort((a, b) => b.score - a.score)
+
+  console.log('Hybrid search: top 3 scores:', hybridResults.slice(0, 3).map(r =>
+    `${r.score.toFixed(3)} (vec:${r.vectorScore?.toFixed(3)}, kw:${r.keywordScore?.toFixed(3)})`
+  ).join(', '))
+
+  return hybridResults.slice(0, limit)
 }
 
 async function fallbackTextSearch(
