@@ -37,14 +37,21 @@ export async function PATCH(
       .update(updates)
       .eq('id', memberId)
       .eq('organization_id', orgId)
-      .select('*, user:profiles(*)')
+      .select('*')
       .single()
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json({ member })
+    // Fetch user profile
+    const { data: profile } = await (serviceClient
+      .from('profiles') as any)
+      .select('*')
+      .eq('id', member.user_id)
+      .single()
+
+    return NextResponse.json({ member: { ...member, user: profile } })
   } catch (error) {
     console.error('Member PATCH error:', error)
     return NextResponse.json(

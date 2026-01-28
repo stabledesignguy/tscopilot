@@ -38,7 +38,7 @@ export async function GET(
 
     const { data: members, error } = await (serviceClient
       .from('organization_members') as any)
-      .select('*, user:profiles(*)')
+      .select('*')
       .eq('organization_id', orgId)
       .eq('is_active', true)
       .order('joined_at', { ascending: false })
@@ -47,7 +47,20 @@ export async function GET(
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json({ members: members || [] })
+    // Fetch profiles for all members
+    const userIds = (members || []).map((m: any) => m.user_id)
+    const { data: profiles } = await (serviceClient
+      .from('profiles') as any)
+      .select('*')
+      .in('id', userIds)
+
+    // Combine members with their profiles
+    const membersWithProfiles = (members || []).map((member: any) => ({
+      ...member,
+      user: (profiles || []).find((p: any) => p.id === member.user_id) || null,
+    }))
+
+    return NextResponse.json({ members: membersWithProfiles })
   } catch (error) {
     console.error('Members GET error:', error)
     return NextResponse.json(
@@ -111,14 +124,21 @@ export async function POST(
         .from('organization_members') as any)
         .update({ is_active: true, role })
         .eq('id', (existing as any).id)
-        .select('*, user:profiles(*)')
+        .select('*')
         .single()
 
       if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 })
       }
 
-      return NextResponse.json({ member })
+      // Fetch user profile
+      const { data: profile } = await (serviceClient
+        .from('profiles') as any)
+        .select('*')
+        .eq('id', userId)
+        .single()
+
+      return NextResponse.json({ member: { ...member, user: profile } })
     }
 
     // Check organization limits
@@ -150,14 +170,21 @@ export async function POST(
         role,
         invited_by: user.id,
       })
-      .select('*, user:profiles(*)')
+      .select('*')
       .single()
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json({ member }, { status: 201 })
+    // Fetch user profile
+    const { data: profile } = await (serviceClient
+      .from('profiles') as any)
+      .select('*')
+      .eq('id', userId)
+      .single()
+
+    return NextResponse.json({ member: { ...member, user: profile } }, { status: 201 })
   } catch (error) {
     console.error('Members POST error:', error)
     return NextResponse.json(

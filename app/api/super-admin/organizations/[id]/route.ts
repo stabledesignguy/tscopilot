@@ -45,13 +45,28 @@ export async function GET(
       .eq('organization_id', id)
       .single()
 
-    // Get members with user data
+    // Get members
     const { data: members } = await (serviceClient
       .from('organization_members') as any)
-      .select('*, user:profiles(*)')
+      .select('*')
       .eq('organization_id', id)
       .eq('is_active', true)
       .order('joined_at', { ascending: false })
+
+    // Fetch profiles for all members
+    const userIds = (members || []).map((m: any) => m.user_id)
+    const { data: profiles } = userIds.length > 0
+      ? await (serviceClient
+          .from('profiles') as any)
+          .select('*')
+          .in('id', userIds)
+      : { data: [] }
+
+    // Combine members with their profiles
+    const membersWithProfiles = (members || []).map((member: any) => ({
+      ...member,
+      user: (profiles || []).find((p: any) => p.id === member.user_id) || null,
+    }))
 
     // Get stats
     const [productsCount, documentsCount, conversationsCount] = await Promise.all([
@@ -72,7 +87,7 @@ export async function GET(
     const organization = {
       ...(org as object),
       settings,
-      members: members || [],
+      members: membersWithProfiles,
       stats: {
         products: productsCount.count || 0,
         documents: documentsCount.count || 0,

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { isSuperAdmin, isOrgAdmin } from '@/lib/auth/permissions'
-import { sendInvitationEmail } from '@/lib/email/resend'
+import { sendInvitationEmail, sendAddedToOrgEmail } from '@/lib/email/resend'
 import crypto from 'crypto'
 
 export async function POST(
@@ -60,23 +60,48 @@ export async function POST(
         )
       }
 
+      // Get org name and inviter email for notification
+      const { data: org } = await (serviceClient
+        .from('organizations') as any)
+        .select('name')
+        .eq('id', orgId)
+        .single()
+
+      const { data: inviterProfile } = await (serviceClient
+        .from('profiles') as any)
+        .select('email')
+        .eq('id', user.id)
+        .single()
+
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.headers.get('origin') || ''
+
       // If inactive, reactivate
       if (existingMember) {
         const { data: member, error } = await (serviceClient
           .from('organization_members') as any)
           .update({ is_active: true, role })
           .eq('id', (existingMember as any).id)
-          .select('*, user:profiles(*)')
+          .select('*')
           .single()
 
         if (error) {
           return NextResponse.json({ error: error.message }, { status: 500 })
         }
 
+        // Send notification email
+        const emailSent = await sendAddedToOrgEmail({
+          to: email,
+          organizationName: org?.name || 'Organization',
+          inviterEmail: inviterProfile?.email,
+          role,
+          appUrl: baseUrl,
+        })
+
         return NextResponse.json({
-          message: 'User added to organization',
-          member,
+          message: emailSent ? 'User added and notified.' : 'User added to organization.',
+          member: { ...member, user: existingUser },
           existingUser: true,
+          emailSent,
         })
       }
 
@@ -89,17 +114,27 @@ export async function POST(
           role,
           invited_by: user.id,
         })
-        .select('*, user:profiles(*)')
+        .select('*')
         .single()
 
       if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 })
       }
 
+      // Send notification email
+      const emailSent = await sendAddedToOrgEmail({
+        to: email,
+        organizationName: org?.name || 'Organization',
+        inviterEmail: inviterProfile?.email,
+        role,
+        appUrl: baseUrl,
+      })
+
       return NextResponse.json({
-        message: 'User added to organization',
-        member,
+        message: emailSent ? 'User added and notified.' : 'User added to organization.',
+        member: { ...member, user: existingUser },
         existingUser: true,
+        emailSent,
       })
     }
 
