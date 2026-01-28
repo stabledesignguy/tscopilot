@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, use } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useParams } from 'next/navigation'
 import { Card, CardContent, CardHeader } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -19,6 +19,7 @@ import {
   Crown,
   User,
   MoreVertical,
+  Pencil,
 } from 'lucide-react'
 import Link from 'next/link'
 import type { Organization, OrganizationSettings, OrganizationMember, User as UserType, LLMProvider } from '@/types'
@@ -33,12 +34,9 @@ interface OrgDetails extends Organization {
   }
 }
 
-export default function OrganizationDetailsPage({
-  params,
-}: {
-  params: Promise<{ id: string }>
-}) {
-  const { id } = use(params)
+export default function OrganizationDetailsPage() {
+  const params = useParams()
+  const id = params.id as string
   const router = useRouter()
   const [org, setOrg] = useState<OrgDetails | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -50,6 +48,10 @@ export default function OrganizationDetailsPage({
   const [settingsForm, setSettingsForm] = useState<Partial<OrganizationSettings>>({})
   const [isSavingSettings, setIsSavingSettings] = useState(false)
   const [memberMenuId, setMemberMenuId] = useState<string | null>(null)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editForm, setEditForm] = useState({ name: '', slug: '', logo_url: '', is_active: true })
+  const [isSavingOrg, setIsSavingOrg] = useState(false)
+  const [editError, setEditError] = useState('')
 
   const fetchOrg = async () => {
     try {
@@ -59,6 +61,12 @@ export default function OrganizationDetailsPage({
         const data = await response.json()
         setOrg(data.organization)
         setSettingsForm(data.organization.settings || {})
+        setEditForm({
+          name: data.organization.name || '',
+          slug: data.organization.slug || '',
+          logo_url: data.organization.logo_url || '',
+          is_active: data.organization.is_active ?? true,
+        })
       } else if (response.status === 404) {
         router.push('/super-admin/organizations')
       }
@@ -97,6 +105,32 @@ export default function OrganizationDetailsPage({
       setInviteError('Failed to send invitation')
     } finally {
       setIsInviting(false)
+    }
+  }
+
+  const handleSaveOrg = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSavingOrg(true)
+    setEditError('')
+
+    try {
+      const response = await fetch(`/api/super-admin/organizations/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editForm),
+      })
+
+      if (response.ok) {
+        setShowEditModal(false)
+        fetchOrg()
+      } else {
+        const data = await response.json()
+        setEditError(data.error || 'Failed to update organization')
+      }
+    } catch (error) {
+      setEditError('Failed to update organization')
+    } finally {
+      setIsSavingOrg(false)
     }
   }
 
@@ -201,15 +235,24 @@ export default function OrganizationDetailsPage({
             <h1 className="text-2xl font-bold text-slate-900">{org.name}</h1>
             <p className="text-slate-500">/{org.slug}</p>
           </div>
-          <span
-            className={`ml-auto px-3 py-1 text-sm rounded-full ${
-              org.is_active
-                ? 'bg-green-100 text-green-700'
-                : 'bg-slate-100 text-slate-600'
-            }`}
-          >
-            {org.is_active ? 'Active' : 'Inactive'}
-          </span>
+          <div className="ml-auto flex items-center gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setShowEditModal(true)}
+            >
+              <Pencil className="w-4 h-4 mr-2" />
+              Edit
+            </Button>
+            <span
+              className={`px-3 py-1 text-sm rounded-full ${
+                org.is_active
+                  ? 'bg-green-100 text-green-700'
+                  : 'bg-slate-100 text-slate-600'
+              }`}
+            >
+              {org.is_active ? 'Active' : 'Inactive'}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -561,6 +604,111 @@ export default function OrganizationDetailsPage({
                         <Mail className="w-4 h-4 mr-2" />
                         Send Invitation
                       </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Edit Organization Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-md mx-4">
+            <CardHeader>
+              <h2 className="text-lg font-semibold text-slate-900">
+                Edit Organization
+              </h2>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSaveOrg} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Organization Name
+                  </label>
+                  <Input
+                    type="text"
+                    value={editForm.name}
+                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                    placeholder="My Organization"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Slug
+                  </label>
+                  <Input
+                    type="text"
+                    value={editForm.slug}
+                    onChange={(e) => setEditForm({ ...editForm, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') })}
+                    placeholder="my-organization"
+                    required
+                  />
+                  <p className="text-xs text-slate-500 mt-1">
+                    URL-friendly identifier (lowercase, hyphens only)
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Logo URL
+                  </label>
+                  <Input
+                    type="url"
+                    value={editForm.logo_url}
+                    onChange={(e) => setEditForm({ ...editForm, logo_url: e.target.value })}
+                    placeholder="https://example.com/logo.png"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="is_active"
+                    checked={editForm.is_active}
+                    onChange={(e) => setEditForm({ ...editForm, is_active: e.target.checked })}
+                    className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                  />
+                  <label htmlFor="is_active" className="text-sm text-slate-700">
+                    Organization is active
+                  </label>
+                </div>
+
+                {editError && (
+                  <p className="text-sm text-red-600">{editError}</p>
+                )}
+
+                <div className="flex justify-end gap-3 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowEditModal(false)
+                      setEditError('')
+                      if (org) {
+                        setEditForm({
+                          name: org.name,
+                          slug: org.slug,
+                          logo_url: org.logo_url || '',
+                          is_active: org.is_active,
+                        })
+                      }
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isSavingOrg}>
+                    {isSavingOrg ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      'Save Changes'
                     )}
                   </Button>
                 </div>

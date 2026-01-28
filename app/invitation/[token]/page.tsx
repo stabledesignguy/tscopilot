@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, use } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useParams } from 'next/navigation'
 import { Card, CardContent, CardHeader } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Building2, Loader2, CheckCircle, XCircle, LogIn } from 'lucide-react'
@@ -18,12 +18,9 @@ interface InvitationData {
   expires_at: string
 }
 
-export default function InvitationPage({
-  params,
-}: {
-  params: Promise<{ token: string }>
-}) {
-  const { token } = use(params)
+export default function InvitationPage() {
+  const params = useParams()
+  const token = params.token as string
   const router = useRouter()
   const [invitation, setInvitation] = useState<InvitationData | null>(null)
   const [isLoading, setIsLoading] = useState(true)

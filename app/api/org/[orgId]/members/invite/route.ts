@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { isSuperAdmin, isOrgAdmin } from '@/lib/auth/permissions'
+import { sendInvitationEmail } from '@/lib/email/resend'
 import crypto from 'crypto'
 
 export async function POST(
@@ -177,15 +178,35 @@ export async function POST(
       .eq('id', orgId)
       .single()
 
+    // Get inviter's email
+    const { data: inviterProfile } = await (serviceClient
+      .from('profiles') as any)
+      .select('email')
+      .eq('id', user.id)
+      .single()
+
     // Generate invitation URL
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.headers.get('origin') || ''
     const invitationUrl = `${baseUrl}/invitation/${token}`
+
+    // Send invitation email
+    const emailSent = await sendInvitationEmail({
+      to: email,
+      organizationName: org?.name || 'Organization',
+      inviterEmail: inviterProfile?.email,
+      role,
+      invitationUrl,
+      expiresAt,
+    })
 
     return NextResponse.json({
       invitation,
       invitationUrl,
       organizationName: org?.name,
-      message: 'Invitation created. Share the link with the user.',
+      emailSent,
+      message: emailSent
+        ? 'Invitation sent successfully.'
+        : 'Invitation created but email could not be sent. Share the link manually.',
     }, { status: 201 })
   } catch (error) {
     console.error('Invite error:', error)
