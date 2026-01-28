@@ -23,13 +23,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Verify user owns this conversation
-    const { data: conversation } = await supabase
-      .from('conversations')
+    const { data: conversation } = await (supabase
+      .from('conversations') as any)
       .select('user_id')
       .eq('id', conversationId)
       .single()
 
-    if (!conversation || conversation.user_id !== user.id) {
+    if (!conversation || (conversation as any).user_id !== user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 

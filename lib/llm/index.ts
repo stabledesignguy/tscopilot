@@ -7,6 +7,7 @@ import type {
   LLMResponse,
   StreamingLLMResponse,
   LLMConfig,
+  OrganizationSettings,
 } from '@/types'
 
 export interface LLMServiceOptions {
@@ -81,6 +82,71 @@ export function getConfiguredProviders(): LLMProvider[] {
   if (process.env.OPENAI_API_KEY) providers.push('openai')
   if (process.env.GOOGLE_AI_API_KEY) providers.push('gemini')
   return providers
+}
+
+/**
+ * Get LLM configuration for a specific organization
+ * Returns the org's preferred provider/model or falls back to platform defaults
+ */
+export interface OrgLLMConfig {
+  provider: LLMProvider
+  model?: string
+  systemInstructions?: string | null
+}
+
+export async function getOrgLLMConfig(
+  supabase: any,
+  organizationId: string
+): Promise<OrgLLMConfig> {
+  try {
+    const { data: settings, error } = await supabase
+      .from('organization_settings')
+      .select('llm_provider, llm_model, system_instructions')
+      .eq('organization_id', organizationId)
+      .single()
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error fetching org LLM config:', error)
+    }
+
+    // Determine provider: org setting > platform default
+    let provider: LLMProvider
+    if (settings?.llm_provider && isProviderConfigured(settings.llm_provider)) {
+      provider = settings.llm_provider
+    } else {
+      provider = getDefaultProvider()
+    }
+
+    return {
+      provider,
+      model: settings?.llm_model || undefined,
+      systemInstructions: settings?.system_instructions || null,
+    }
+  } catch (err) {
+    console.error('Exception fetching org LLM config:', err)
+    return {
+      provider: getDefaultProvider(),
+    }
+  }
+}
+
+/**
+ * Get LLM service options for an organization
+ * Combines org settings with any overrides
+ */
+export async function getOrgLLMServiceOptions(
+  supabase: any,
+  organizationId: string,
+  overrides?: Partial<LLMServiceOptions>
+): Promise<LLMServiceOptions> {
+  const orgConfig = await getOrgLLMConfig(supabase, organizationId)
+
+  return {
+    provider: overrides?.provider || orgConfig.provider,
+    model: overrides?.model || orgConfig.model,
+    temperature: overrides?.temperature,
+    maxTokens: overrides?.maxTokens,
+  }
 }
 
 export const defaultSystemPrompt = `You are a technical support AI assistant for medical device products.
@@ -176,11 +242,44 @@ export interface DocumentSource {
   url: string
 }
 
-export async function getSystemInstructions(supabase: any): Promise<string | null> {
+/**
+ * Get system instructions for a specific organization
+ * Priority: org settings > org's system_instructions table > global default
+ */
+export async function getSystemInstructions(
+  supabase: any,
+  organizationId?: string
+): Promise<string | null> {
   try {
+    // If org ID provided, first check org settings
+    if (organizationId) {
+      const { data: orgSettings, error: orgError } = await supabase
+        .from('organization_settings')
+        .select('system_instructions')
+        .eq('organization_id', organizationId)
+        .single()
+
+      if (!orgError && orgSettings?.system_instructions) {
+        return orgSettings.system_instructions
+      }
+
+      // Then check org-specific system_instructions table
+      const { data: orgInstructions, error: instError } = await supabase
+        .from('system_instructions')
+        .select('instructions')
+        .eq('organization_id', organizationId)
+        .limit(1)
+
+      if (!instError && orgInstructions?.[0]?.instructions) {
+        return orgInstructions[0].instructions
+      }
+    }
+
+    // Fall back to global system instructions (no org_id or null org_id)
     const { data, error } = await supabase
       .from('system_instructions')
       .select('instructions')
+      .is('organization_id', null)
       .limit(1)
 
     if (error) {
@@ -188,7 +287,6 @@ export async function getSystemInstructions(supabase: any): Promise<string | nul
       return null
     }
 
-    // data is an array, get first item if exists
     // Return null if no custom instructions, so caller knows to use default RAG prompt
     return data?.[0]?.instructions || null
   } catch (err) {

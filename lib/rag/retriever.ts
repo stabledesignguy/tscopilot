@@ -25,7 +25,7 @@ export async function retrieveRelevantChunks(
   limit: number = 5,
   threshold: number = 0.15
 ): Promise<ChunkWithSource[]> {
-  const supabase = await createServiceClient()
+  const supabase = createServiceClient()
 
   // Generate embedding for the query
   const queryEmbedding = await generateEmbeddings(query)
@@ -38,7 +38,7 @@ export async function retrieveRelevantChunks(
   // Use 9 decimal places to match PostgreSQL's vector::text format
   const embeddingString = `[${queryEmbedding.map(v => v.toFixed(9)).join(',')}]`
 
-  const { data, error } = await supabase.rpc('match_documents', {
+  const { data, error } = await (supabase as any).rpc('match_documents', {
     query_embedding: embeddingString,
     match_threshold: threshold,
     match_count: limit,
@@ -53,25 +53,25 @@ export async function retrieveRelevantChunks(
   }
 
   // Fallback to text search if vector search returns no results
-  if (!data || data.length === 0) {
+  if (!data || (data as any[]).length === 0) {
     console.log('Vector search returned no results, falling back to text search for product:', productId)
     return fallbackTextSearch(query, productId, limit)
   }
 
   // Get unique document IDs
-  const documentIds = [...new Set((data || []).map((item: any) => item.document_id))]
+  const documentIds = Array.from(new Set(((data || []) as any[]).map((item: any) => item.document_id)))
 
   // Fetch document info for all chunks
-  const { data: documents } = await supabase
-    .from('documents')
+  const { data: documents } = await (supabase
+    .from('documents') as any)
     .select('id, filename, file_url')
     .in('id', documentIds)
 
-  const documentMap = new Map(
-    (documents || []).map((doc: any) => [doc.id, doc])
+  const documentMap = new Map<string, DocumentSource>(
+    (documents || []).map((doc: any) => [doc.id, doc as DocumentSource])
   )
 
-  return (data || []).map((item: any) => {
+  return ((data || []) as any[]).map((item: any) => {
     // Extract page info from metadata if available
     const metadata = item.metadata || {}
     const pageInfo: PageInfo | undefined = metadata.page_numbers
@@ -103,7 +103,7 @@ async function fallbackTextSearch(
   productId: string,
   limit: number
 ): Promise<ChunkWithSource[]> {
-  const supabase = await createServiceClient()
+  const supabase = createServiceClient()
 
   console.log('Fallback text search: filtering by product_id:', productId)
 
@@ -204,8 +204,8 @@ async function fallbackTextSearch(
         pageInfo
       }
     })
-    .filter((item) => item.score > 0)
-    .sort((a, b) => b.score - a.score)
+    .filter((item: any) => item.score > 0)
+    .sort((a: any, b: any) => b.score - a.score)
     .slice(0, limit)
 
   console.log('Fallback text search returned', scoredChunks.length, 'results for product:', productId)
@@ -215,7 +215,7 @@ async function fallbackTextSearch(
 export async function getChunksByDocument(
   documentId: string
 ): Promise<DocumentChunk[]> {
-  const supabase = await createServiceClient()
+  const supabase = createServiceClient()
 
   const { data, error } = await supabase
     .from('document_chunks')

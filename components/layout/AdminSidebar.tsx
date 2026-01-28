@@ -10,6 +10,8 @@ import {
   FolderTree,
   ArrowLeft,
   Settings,
+  Users,
+  Bot,
 } from 'lucide-react'
 import { useTranslation } from '@/lib/i18n/useTranslation'
 import { LanguageSwitcher } from '@/components/providers/LanguageSwitcher'
@@ -20,6 +22,8 @@ export function AdminSidebar() {
 
   const navItems = [
     { href: '/admin', icon: LayoutDashboard, labelKey: 'admin.dashboard' as const },
+    { href: '/admin/users', icon: Users, label: 'Users' },
+    { href: '/admin/settings', icon: Bot, label: 'LLM Settings' },
     { href: '/admin/instructions', icon: Settings, labelKey: 'admin.systemInstructions' as const },
     { href: '/admin/groups', icon: FolderTree, labelKey: 'admin.groups' as const },
     { href: '/admin/products', icon: Package, labelKey: 'admin.products' as const },
@@ -56,7 +60,7 @@ export function AdminSidebar() {
                   }`}
                 >
                   <item.icon className="w-5 h-5" />
-                  {t(item.labelKey)}
+                  {'labelKey' in item && item.labelKey ? t(item.labelKey) : item.label}
                 </Link>
               </li>
             )

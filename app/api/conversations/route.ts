@@ -61,8 +61,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { data: conversation, error } = await supabase
-      .from('conversations')
+    const { data: conversation, error } = await (supabase
+      .from('conversations') as any)
       .insert({
         user_id: user.id,
         product_id: productId,

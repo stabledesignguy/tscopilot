@@ -16,18 +16,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const supabase = await createServiceClient()
+    const supabase = createServiceClient()
 
     // Update status to processing
-    await supabase
-      .from('documents')
+    await (supabase
+      .from('documents') as any)
       .update({ processing_status: 'processing' })
       .eq('id', documentId)
 
     try {
       // Get document info
-      const { data: document, error: docError } = await supabase
-        .from('documents')
+      const { data: document, error: docError } = await (supabase
+        .from('documents') as any)
         .select('*')
         .eq('id', documentId)
         .single()
@@ -85,8 +85,8 @@ export async function POST(request: NextRequest) {
       console.log(`Processing: Successfully created ${chunksWithPages.length} chunks`)
 
       // Update status to completed
-      await supabase
-        .from('documents')
+      await (supabase
+        .from('documents') as any)
         .update({ processing_status: 'completed' })
         .eq('id', documentId)
 
@@ -98,8 +98,8 @@ export async function POST(request: NextRequest) {
       console.error('Document processing error:', error)
 
       // Update status to failed
-      await supabase
-        .from('documents')
+      await (supabase
+        .from('documents') as any)
         .update({ processing_status: 'failed' })
         .eq('id', documentId)
 

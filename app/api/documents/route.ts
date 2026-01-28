@@ -54,17 +54,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Check if user is admin
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (profile?.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
-
     const formData = await request.formData()
     const file = formData.get('file') as File
     const productId = formData.get('productId') as string
@@ -74,6 +63,39 @@ export async function POST(request: NextRequest) {
         { error: 'File and product ID are required' },
         { status: 400 }
       )
+    }
+
+    // Get the product to check its organization
+    const { data: product } = await supabase
+      .from('products')
+      .select('organization_id')
+      .eq('id', productId)
+      .single()
+
+    if (!product) {
+      return NextResponse.json({ error: 'Product not found' }, { status: 404 })
+    }
+
+    // Check if user has permission
+    const { data: profile } = await (supabase
+      .from('profiles') as any)
+      .select('is_super_admin')
+      .eq('id', user.id)
+      .single()
+
+    const productOrgId = (product as any).organization_id
+    if (!profile?.is_super_admin && productOrgId) {
+      const { data: membership } = await (supabase
+        .from('organization_members') as any)
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('organization_id', productOrgId)
+        .eq('is_active', true)
+        .single()
+
+      if (membership?.role !== 'admin') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
     }
 
     // Validate file type
@@ -109,8 +131,8 @@ export async function POST(request: NextRequest) {
     } = supabase.storage.from('documents').getPublicUrl(fileName)
 
     // Create document record
-    const { data: document, error: docError } = await supabase
-      .from('documents')
+    const { data: document, error: docError } = await (supabase
+      .from('documents') as any)
       .insert({
         product_id: productId,
         filename: file.name,
@@ -155,17 +177,6 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Check if user is admin
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (profile?.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
-
     const { searchParams } = new URL(request.url)
     const documentId = searchParams.get('id')
 
@@ -176,16 +187,42 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    // Get document info
+    // Get document info with product's organization
     const { data: document } = await supabase
       .from('documents')
-      .select('file_url')
+      .select('file_url, product_id, products(organization_id)')
       .eq('id', documentId)
       .single()
 
+    if (!document) {
+      return NextResponse.json({ error: 'Document not found' }, { status: 404 })
+    }
+
+    // Check if user has permission
+    const { data: profile } = await (supabase
+      .from('profiles') as any)
+      .select('is_super_admin')
+      .eq('id', user.id)
+      .single()
+
+    const orgId = (document as any).products?.organization_id
+    if (!profile?.is_super_admin && orgId) {
+      const { data: membership } = await (supabase
+        .from('organization_members') as any)
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('organization_id', orgId)
+        .eq('is_active', true)
+        .single()
+
+      if (membership?.role !== 'admin') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
+    }
+
     if (document) {
       // Extract file path from URL
-      const urlParts = document.file_url.split('/documents/')
+      const urlParts = (document as any).file_url.split('/documents/')
       if (urlParts[1]) {
         await supabase.storage.from('documents').remove([urlParts[1]])
       }

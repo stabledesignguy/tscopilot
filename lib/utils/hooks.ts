@@ -23,8 +23,8 @@ export function useUser(): UserWithRole {
       setUser(user)
 
       if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
+        const { data: profile } = await (supabase
+          .from('profiles') as any)
           .select('role')
           .eq('id', user.id)
           .single()
@@ -40,8 +40,8 @@ export function useUser(): UserWithRole {
       async (event, session) => {
         setUser(session?.user ?? null)
         if (session?.user) {
-          const { data: profile } = await supabase
-            .from('profiles')
+          const { data: profile } = await (supabase
+            .from('profiles') as any)
             .select('role')
             .eq('id', session.user.id)
             .single()

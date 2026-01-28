@@ -7,6 +7,7 @@ import {
   defaultSystemPrompt,
   isProviderConfigured,
   getSystemInstructions,
+  getOrgLLMConfig,
 } from '@/lib/llm'
 import { retrieveRelevantChunks } from '@/lib/rag/retriever'
 import type { LLMProvider, LLMMessage } from '@/types'
@@ -76,6 +77,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Get product info including organization (needed for conversation creation)
+    const { data: product } = await (supabase
+      .from('products') as any)
+      .select('name, organization_id')
+      .eq('id', productId)
+      .single()
+
+    const organizationId = product?.organization_id
+
     // Get or create conversation
     let activeConversationId = conversationId
 
@@ -100,6 +110,7 @@ export async function POST(request: NextRequest) {
         .insert({
           user_id: user.id,
           product_id: productId,
+          organization_id: organizationId,
           title: message.slice(0, 50),
         })
         .select()
@@ -109,7 +120,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: convError.message }, { status: 500 })
       }
       activeConversationId = newConversation.id
-      console.log('Created new conversation:', activeConversationId, 'for product:', productId)
+      console.log('Created new conversation:', activeConversationId, 'for product:', productId, 'in org:', organizationId)
     }
 
     // Save user message
@@ -124,13 +135,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: msgError.message }, { status: 500 })
     }
 
-    // Get product info
-    const { data: product } = await (supabase
-      .from('products') as any)
-      .select('name')
-      .eq('id', productId)
-      .single()
-
     // Get conversation history
     const { data: history } = await (supabase
       .from('messages') as any)
@@ -141,14 +145,14 @@ export async function POST(request: NextRequest) {
 
     const messages: LLMMessage[] =
       history
-        ?.filter((m) => m.content && m.content.trim().length > 0) // Filter out empty messages
-        .map((m) => ({
+        ?.filter((m: any) => m.content && m.content.trim().length > 0) // Filter out empty messages
+        .map((m: any) => ({
           role: m.role as 'user' | 'assistant',
           content: m.content,
         })) || []
 
-    // Fetch custom system instructions from database (returns null if using default)
-    const customInstructions = await getSystemInstructions(supabase)
+    // Fetch custom system instructions - prioritizes org settings, then org instructions, then global
+    const customInstructions = await getSystemInstructions(supabase, organizationId)
 
     // Retrieve relevant document chunks for RAG
     let systemPrompt = customInstructions || defaultSystemPrompt
@@ -212,8 +216,15 @@ export async function POST(request: NextRequest) {
       // Continue without RAG context
     }
 
+    // Get organization LLM config if available
+    let orgLLMConfig = null
+    if (organizationId) {
+      orgLLMConfig = await getOrgLLMConfig(supabase, organizationId)
+    }
+
     // Generate streaming response
-    const provider: LLMProvider = llmProvider || getDefaultProvider()
+    // Priority: explicit param > org setting > platform default
+    const provider: LLMProvider = llmProvider || orgLLMConfig?.provider || getDefaultProvider()
 
     // Check if the provider is configured
     if (!isProviderConfigured(provider)) {
@@ -231,6 +242,7 @@ export async function POST(request: NextRequest) {
     try {
       streamResult = await streamResponse(messages, systemPrompt, {
         provider,
+        model: orgLLMConfig?.model,
       })
     } catch (llmError) {
       console.error('LLM stream error:', llmError)
