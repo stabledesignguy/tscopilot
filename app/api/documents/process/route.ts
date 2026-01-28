@@ -51,8 +51,8 @@ export async function POST(request: NextRequest) {
       // Chunk the content with page tracking
       const chunksWithPages = chunkTextWithPages(parsedDoc.fullText, {
         pages: parsedDoc.pages,
-        chunkSize: 1000,
-        chunkOverlap: 200,
+        chunkSize: 1500,
+        chunkOverlap: 300,
       })
 
       // Generate embeddings and store chunks with page metadata
