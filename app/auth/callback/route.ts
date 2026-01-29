@@ -70,15 +70,24 @@ export async function GET(request: Request) {
   const token_hash = searchParams.get('token_hash')
   const type = searchParams.get('type')
   const next = searchParams.get('next') ?? '/'
+  const error_description = searchParams.get('error_description')
+
+  // If Supabase sent an error, pass it through
+  if (error_description) {
+    return NextResponse.redirect(`${origin}/auth/login?error=${encodeURIComponent(error_description)}`)
+  }
 
   const supabase = await createClient()
   let authSuccess = false
+  let authError: string | null = null
 
   // Handle OAuth code exchange (e.g., Google, GitHub login)
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
       authSuccess = true
+    } else {
+      authError = error.message
     }
   }
 
@@ -90,6 +99,8 @@ export async function GET(request: Request) {
     })
     if (!error) {
       authSuccess = true
+    } else {
+      authError = error.message
     }
   }
 
@@ -105,6 +116,9 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}${next}`)
   }
 
-  // Return the user to an error page with instructions
-  return NextResponse.redirect(`${origin}/auth/login?error=Could not authenticate`)
+  // Build error message for debugging
+  const errorMsg = authError || 'No auth parameters received'
+  const debugInfo = `code=${!!code}&token_hash=${!!token_hash}&type=${type || 'none'}`
+
+  return NextResponse.redirect(`${origin}/auth/login?error=${encodeURIComponent(errorMsg)}&debug=${encodeURIComponent(debugInfo)}`)
 }
