@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { isSuperAdmin, isOrgAdmin } from '@/lib/auth/permissions'
-import { sendAddedToOrgEmail } from '@/lib/email/resend'
+import { sendInvitationEmail, sendAddedToOrgEmail } from '@/lib/email/resend'
 import crypto from 'crypto'
 
 export async function POST(
@@ -184,11 +184,17 @@ export async function POST(
       )
     }
 
-    // Get organization name for the invitation
+    // Get organization name and inviter email for the invitation
     const { data: org } = await (serviceClient
       .from('organizations') as any)
       .select('name')
       .eq('id', orgId)
+      .single()
+
+    const { data: inviterProfile } = await (serviceClient
+      .from('profiles') as any)
+      .select('email')
+      .eq('id', user.id)
       .single()
 
     // Generate invitation token for tracking
@@ -214,9 +220,7 @@ export async function POST(
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // Use Supabase Admin to invite the user
-    // This creates their account and sends an invite email in one step
-    // When they click the link and set their password, they'll be logged in automatically
+    // Use Supabase Admin to generate a magic link (without sending email)
     const adminClient = createAdminClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -225,31 +229,55 @@ export async function POST(
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.headers.get('origin') || ''
 
-    const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
-      redirectTo: `${baseUrl}/auth/callback`,
-      data: {
-        organization_id: orgId,
-        organization_name: org?.name,
-        role: role,
-        invitation_token: token,
+    // Generate magic link for the user
+    const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
+      type: 'magiclink',
+      email: email,
+      options: {
+        redirectTo: `${baseUrl}/auth/callback`,
       }
     })
 
-    if (inviteError) {
-      // Clean up the invitation record if Supabase invite fails
+    if (linkError) {
+      // Clean up the invitation record if link generation fails
       await (serviceClient
         .from('organization_invitations') as any)
         .delete()
         .eq('id', invitation.id)
 
-      return NextResponse.json({ error: inviteError.message }, { status: 500 })
+      return NextResponse.json({ error: linkError.message }, { status: 500 })
     }
+
+    // The magic link URL from Supabase
+    const magicLinkUrl = linkData.properties?.action_link
+
+    if (!magicLinkUrl) {
+      // Clean up if no link was generated
+      await (serviceClient
+        .from('organization_invitations') as any)
+        .delete()
+        .eq('id', invitation.id)
+
+      return NextResponse.json({ error: 'Failed to generate invitation link' }, { status: 500 })
+    }
+
+    // Send custom invitation email via Resend
+    const emailSent = await sendInvitationEmail({
+      to: email,
+      organizationName: org?.name || 'Organization',
+      inviterEmail: inviterProfile?.email,
+      role,
+      invitationUrl: magicLinkUrl,
+      expiresAt,
+    })
 
     return NextResponse.json({
       invitation,
       organizationName: org?.name,
-      emailSent: true,
-      message: 'Invitation sent successfully. The user will receive an email to set up their account.',
+      emailSent,
+      message: emailSent
+        ? 'Invitation sent successfully.'
+        : 'Invitation created but email could not be sent.',
     }, { status: 201 })
   } catch (error) {
     console.error('Invite error:', error)
