@@ -20,15 +20,27 @@ export default async function AdminLayout({
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role, is_super_admin')
+    .select('is_super_admin')
     .eq('id', user.id)
     .single()
 
-  if ((profile as { role: string } | null)?.role !== 'admin') {
+  const isSuperAdmin = (profile as { is_super_admin?: boolean } | null)?.is_super_admin ?? false
+
+  // Check if user is org admin (has admin role in any organization)
+  const { data: adminMembership } = await (supabase
+    .from('organization_members') as any)
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('role', 'admin')
+    .eq('is_active', true)
+    .limit(1)
+
+  const isOrgAdmin = adminMembership && adminMembership.length > 0
+
+  // Allow access if user is super admin OR org admin
+  if (!isSuperAdmin && !isOrgAdmin) {
     redirect('/')
   }
-
-  const isSuperAdmin = (profile as { is_super_admin?: boolean } | null)?.is_super_admin ?? false
 
   return (
     <OrganizationProviderWrapper userId={user.id} isSuperAdmin={isSuperAdmin}>
