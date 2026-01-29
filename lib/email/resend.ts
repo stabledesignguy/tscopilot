@@ -118,7 +118,7 @@ If you didn't expect this invitation, you can safely ignore this email.
 </html>
 `.trim()
 
-  return sendEmail({ to, subject, text, html })
+  return await sendEmail({ to, subject, text, html })
 }
 
 interface AddedToOrgEmailParams {
@@ -184,5 +184,5 @@ If you didn't expect this, please contact your administrator.
 </html>
 `.trim()
 
-  return sendEmail({ to, subject, text, html })
+  return await sendEmail({ to, subject, text, html })
 }

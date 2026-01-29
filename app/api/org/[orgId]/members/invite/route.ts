@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { isSuperAdmin, isOrgAdmin } from '@/lib/auth/permissions'
-import { sendInvitationEmail, sendAddedToOrgEmail } from '@/lib/email/resend'
+import { sendAddedToOrgEmail } from '@/lib/email/resend'
 import crypto from 'crypto'
 
 export async function POST(
@@ -183,12 +184,19 @@ export async function POST(
       )
     }
 
-    // Generate invitation token
+    // Get organization name for the invitation
+    const { data: org } = await (serviceClient
+      .from('organizations') as any)
+      .select('name')
+      .eq('id', orgId)
+      .single()
+
+    // Generate invitation token for tracking
     const token = crypto.randomBytes(32).toString('hex')
     const expiresAt = new Date()
     expiresAt.setDate(expiresAt.getDate() + 7) // 7 days expiry
 
-    // Create invitation
+    // Create invitation record to track org/role
     const { data: invitation, error } = await (serviceClient
       .from('organization_invitations') as any)
       .insert({
@@ -206,42 +214,42 @@ export async function POST(
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // Get organization name for the invitation link
-    const { data: org } = await (serviceClient
-      .from('organizations') as any)
-      .select('name')
-      .eq('id', orgId)
-      .single()
+    // Use Supabase Admin to invite the user
+    // This creates their account and sends an invite email in one step
+    // When they click the link and set their password, they'll be logged in automatically
+    const adminClient = createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    )
 
-    // Get inviter's email
-    const { data: inviterProfile } = await (serviceClient
-      .from('profiles') as any)
-      .select('email')
-      .eq('id', user.id)
-      .single()
-
-    // Generate invitation URL
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.headers.get('origin') || ''
-    const invitationUrl = `${baseUrl}/invitation/${token}`
 
-    // Send invitation email
-    const emailSent = await sendInvitationEmail({
-      to: email,
-      organizationName: org?.name || 'Organization',
-      inviterEmail: inviterProfile?.email,
-      role,
-      invitationUrl,
-      expiresAt,
+    const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
+      redirectTo: `${baseUrl}/auth/callback`,
+      data: {
+        organization_id: orgId,
+        organization_name: org?.name,
+        role: role,
+        invitation_token: token,
+      }
     })
+
+    if (inviteError) {
+      // Clean up the invitation record if Supabase invite fails
+      await (serviceClient
+        .from('organization_invitations') as any)
+        .delete()
+        .eq('id', invitation.id)
+
+      return NextResponse.json({ error: inviteError.message }, { status: 500 })
+    }
 
     return NextResponse.json({
       invitation,
-      invitationUrl,
       organizationName: org?.name,
-      emailSent,
-      message: emailSent
-        ? 'Invitation sent successfully.'
-        : 'Invitation created but email could not be sent. Share the link manually.',
+      emailSent: true,
+      message: 'Invitation sent successfully. The user will receive an email to set up their account.',
     }, { status: 201 })
   } catch (error) {
     console.error('Invite error:', error)
