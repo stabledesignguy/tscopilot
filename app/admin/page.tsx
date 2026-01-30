@@ -28,25 +28,28 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch stats
-        const [groupsRes, productsRes, documentsRes] = await Promise.all([
-          fetch('/api/groups'),
-          fetch('/api/products'),
+        // Fetch stats and documents in parallel
+        const [statsRes, documentsRes] = await Promise.all([
+          fetch('/api/admin/stats'),
           fetch('/api/documents'),
         ])
 
-        const [groupsData, productsData, documentsData] = await Promise.all([
-          groupsRes.json(),
-          productsRes.json(),
+        const [statsData, documentsData] = await Promise.all([
+          statsRes.json(),
           documentsRes.json(),
         ])
 
-        setStats({
-          groups: groupsData.groups?.length || 0,
-          products: productsData.products?.length || 0,
-          documents: documentsData.documents?.length || 0,
-          conversations: 0, // Conversations count would need a dedicated endpoint
-        })
+        if (statsData.stats) {
+          setStats(statsData.stats)
+        } else {
+          // Fallback if stats endpoint fails
+          setStats({
+            groups: 0,
+            products: 0,
+            documents: documentsData.documents?.length || 0,
+            conversations: 0,
+          })
+        }
 
         // Get recent documents (last 5)
         const docs = documentsData.documents || []
