@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useCallback } from 'react'
-import { Bot, User } from 'lucide-react'
+import { User } from 'lucide-react'
+import Image from 'next/image'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { Message } from '@/types'
@@ -51,8 +52,14 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
             }`}
           >
             {message.role === 'assistant' && (
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center">
-                <Bot className="w-4 h-4 text-primary-600" />
+              <div className="flex-shrink-0 w-8 h-8 rounded-full overflow-hidden">
+                <Image
+                  src="/tscopilot-icon.png"
+                  alt="TScopilot"
+                  width={32}
+                  height={32}
+                  className="w-full h-full object-cover"
+                />
               </div>
             )}
             <div
@@ -202,8 +209,14 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
 
         {isLoading && (
           <div className="flex gap-3 justify-start message-fade-in">
-            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center">
-              <Bot className="w-4 h-4 text-primary-600" />
+            <div className="flex-shrink-0 w-8 h-8 rounded-full overflow-hidden">
+              <Image
+                src="/tscopilot-icon.png"
+                alt="TScopilot"
+                width={32}
+                height={32}
+                className="w-full h-full object-cover"
+              />
             </div>
             <div className="bg-secondary-100 rounded-2xl rounded-tl-md px-4 py-3">
               <div className="flex gap-1.5">
