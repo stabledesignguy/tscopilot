@@ -7,6 +7,7 @@ export interface User {
   email: string
   role: UserRole
   is_super_admin: boolean
+  is_active: boolean
   created_at: string
 }
 
