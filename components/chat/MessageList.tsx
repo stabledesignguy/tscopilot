@@ -157,7 +157,7 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
                           >
                             {children}
                             {isPDF && (
-                              <span className="ml-1 text-xs text-yellow-600" title="Opens in PDF viewer with highlights">
+                              <span className="ml-1 text-xs text-yellow-600" title="Opens in new tab">
                                 {pageNum ? `[Page ${pageNum}]` : '[PDF]'}
                               </span>
                             )}
