@@ -1,10 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Loader2, Save, RotateCcw, Info } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { useTranslation } from '@/lib/i18n/useTranslation'
+
+const ORG_STORAGE_KEY = 'tscopilot_current_org_id'
 
 export default function SystemInstructionsPage() {
   const [instructions, setInstructions] = useState('')
@@ -13,11 +15,37 @@ export default function SystemInstructionsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [currentOrgId, setCurrentOrgId] = useState<string | null>(null)
   const { t } = useTranslation()
 
+  // Get current org ID and listen for changes
   useEffect(() => {
-    fetchInstructions()
+    const getOrgId = () => {
+      if (typeof window !== 'undefined') {
+        return localStorage.getItem(ORG_STORAGE_KEY)
+      }
+      return null
+    }
+
+    setCurrentOrgId(getOrgId())
+
+    // Listen for storage changes (org switch)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === ORG_STORAGE_KEY) {
+        setCurrentOrgId(e.newValue)
+      }
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
   }, [])
+
+  // Fetch instructions when org changes
+  useEffect(() => {
+    if (currentOrgId !== null) {
+      fetchInstructions()
+    }
+  }, [currentOrgId])
 
   const fetchInstructions = async () => {
     try {

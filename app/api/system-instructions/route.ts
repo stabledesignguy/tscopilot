@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { defaultSystemPrompt } from '@/lib/llm'
+import { cookies } from 'next/headers'
+
+const ORG_STORAGE_KEY = 'tscopilot_current_org_id'
+
+async function getCurrentOrgId(): Promise<string | null> {
+  const cookieStore = await cookies()
+  return cookieStore.get(ORG_STORAGE_KEY)?.value || null
+}
 
 export async function GET() {
   try {
@@ -13,9 +21,16 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const orgId = await getCurrentOrgId()
+    if (!orgId) {
+      return NextResponse.json({ error: 'No organization selected' }, { status: 400 })
+    }
+
+    // Get system instructions for this organization
     const { data, error } = await (supabase
       .from('system_instructions') as any)
       .select('*')
+      .eq('organization_id', orgId)
       .limit(1)
 
     if (error) {
@@ -23,7 +38,6 @@ export async function GET() {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // data is an array, get first item if exists
     const instruction = data?.[0]
 
     return NextResponse.json({
@@ -43,7 +57,6 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
 
-    // Check if user is admin
     const {
       data: { user },
     } = await supabase.auth.getUser()
@@ -51,14 +64,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const orgId = await getCurrentOrgId()
+    if (!orgId) {
+      return NextResponse.json({ error: 'No organization selected' }, { status: 400 })
+    }
+
+    // Check if user is org admin or super admin
     const { data: profile } = await (supabase
       .from('profiles') as any)
-      .select('role')
+      .select('is_super_admin')
       .eq('id', user.id)
       .single()
 
-    if (profile?.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    if (!profile?.is_super_admin) {
+      const { data: membership } = await (supabase
+        .from('organization_members') as any)
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('organization_id', orgId)
+        .eq('is_active', true)
+        .single()
+
+      if (!membership || membership.role !== 'admin') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
     }
 
     const body = await request.json()
@@ -71,17 +100,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if a record already exists
+    // Check if a record already exists for this organization
     const { data: existingData } = await (supabase
       .from('system_instructions') as any)
       .select('id')
+      .eq('organization_id', orgId)
       .limit(1)
 
     const existing = existingData?.[0]
 
     let result
     if (existing) {
-      // Update existing record
+      // Update existing record for this organization
       result = await (supabase
         .from('system_instructions') as any)
         .update({
@@ -92,11 +122,12 @@ export async function POST(request: NextRequest) {
         .select()
         .single()
     } else {
-      // Insert new record
+      // Insert new record for this organization
       result = await (supabase
         .from('system_instructions') as any)
         .insert({
           instructions,
+          organization_id: orgId,
           updated_by: user.id,
         })
         .select()
@@ -124,7 +155,6 @@ export async function DELETE() {
   try {
     const supabase = await createClient()
 
-    // Check if user is admin
     const {
       data: { user },
     } = await supabase.auth.getUser()
@@ -132,21 +162,37 @@ export async function DELETE() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const orgId = await getCurrentOrgId()
+    if (!orgId) {
+      return NextResponse.json({ error: 'No organization selected' }, { status: 400 })
+    }
+
+    // Check if user is org admin or super admin
     const { data: profile } = await (supabase
       .from('profiles') as any)
-      .select('role')
+      .select('is_super_admin')
       .eq('id', user.id)
       .single()
 
-    if (profile?.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    if (!profile?.is_super_admin) {
+      const { data: membership } = await (supabase
+        .from('organization_members') as any)
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('organization_id', orgId)
+        .eq('is_active', true)
+        .single()
+
+      if (!membership || membership.role !== 'admin') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
     }
 
-    // Delete all system instructions (reset to default)
+    // Delete system instructions for this organization only
     const { error } = await (supabase
       .from('system_instructions') as any)
       .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000') // Delete all rows
+      .eq('organization_id', orgId)
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
