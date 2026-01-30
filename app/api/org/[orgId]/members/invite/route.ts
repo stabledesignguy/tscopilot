@@ -93,8 +93,7 @@ export async function POST(
         const emailSent = await sendAddedToOrgEmail({
           to: email,
           organizationName: org?.name || 'Organization',
-          inviterEmail: inviterProfile?.email,
-          role,
+                    role,
           appUrl: baseUrl,
         })
 
@@ -126,8 +125,7 @@ export async function POST(
       const emailSent = await sendAddedToOrgEmail({
         to: email,
         organizationName: org?.name || 'Organization',
-        inviterEmail: inviterProfile?.email,
-        role,
+                role,
         appUrl: baseUrl,
       })
 
@@ -265,8 +263,7 @@ export async function POST(
     const emailSent = await sendInvitationEmail({
       to: email,
       organizationName: org?.name || 'Organization',
-      inviterEmail: inviterProfile?.email,
-      role,
+            role,
       invitationUrl: magicLinkUrl,
       expiresAt,
     })

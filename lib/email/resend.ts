@@ -123,7 +123,6 @@ If you didn't expect this invitation, you can safely ignore this email.
 interface AddedToOrgEmailParams {
   to: string
   organizationName: string
-  inviterEmail?: string
   role: string
   appUrl: string
 }
@@ -131,16 +130,14 @@ interface AddedToOrgEmailParams {
 export async function sendAddedToOrgEmail({
   to,
   organizationName,
-  inviterEmail,
   role,
   appUrl,
 }: AddedToOrgEmailParams): Promise<boolean> {
   const subject = `You've been added to ${organizationName}`
+  const logoUrl = 'https://tscopilot.vercel.app/logo-email.png'
 
   const text = `
 You've been added to ${organizationName} as a ${role}.
-
-${inviterEmail ? `Added by: ${inviterEmail}` : ''}
 
 You can access the organization by logging in:
 ${appUrl}
@@ -156,8 +153,9 @@ If you didn't expect this, please contact your administrator.
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
-    <h1 style="color: white; margin: 0; font-size: 24px;">Welcome!</h1>
+  <div style="background: linear-gradient(135deg, #EE955B 0%, #ffffff 100%); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+    <img src="${logoUrl}" alt="TScopilot" style="height: 40px; margin-bottom: 15px;">
+    <h1 style="color: #333; margin: 0; font-size: 24px;">Welcome!</h1>
   </div>
 
   <div style="background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px;">
@@ -165,10 +163,8 @@ If you didn't expect this, please contact your administrator.
       You've been added to <strong>${organizationName}</strong> as a <strong>${role}</strong>.
     </p>
 
-    ${inviterEmail ? `<p style="color: #6b7280; font-size: 14px;">Added by: ${inviterEmail}</p>` : ''}
-
     <div style="text-align: center; margin: 30px 0;">
-      <a href="${appUrl}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+      <a href="${appUrl}" style="display: inline-block; background: linear-gradient(135deg, #EE955B 0%, #f4a574 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
         Go to App
       </a>
     </div>
