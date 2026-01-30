@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
-import { Search, Loader2, User, Shield, Building2 } from 'lucide-react'
-import type { User as UserType, OrganizationMember, Organization } from '@/types'
+import { Search, Loader2, User, Shield, Building2, Clock } from 'lucide-react'
+import type { User as UserType, OrganizationMember, Organization, OrganizationInvitation } from '@/types'
 
 interface UserWithOrgs extends UserType {
   memberships?: (OrganizationMember & { organization: Organization })[]
+  pendingInvitations?: (OrganizationInvitation & { organization: Organization })[]
 }
 
 export default function AllUsersPage() {
@@ -95,19 +96,31 @@ export default function AllUsersPage() {
                     </div>
                   </div>
 
-                  {/* Organizations */}
-                  {user.memberships && user.memberships.length > 0 && (
+                  {/* Organizations - Memberships and Pending Invitations */}
+                  {((user.memberships && user.memberships.length > 0) || (user.pendingInvitations && user.pendingInvitations.length > 0)) && (
                     <div className="mt-3 pl-13 flex flex-wrap gap-2">
-                      {user.memberships.map((m) => (
+                      {/* Active memberships */}
+                      {user.memberships?.map((m) => (
                         <span
                           key={m.id}
-                          className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-slate-100 text-slate-600 rounded-full"
+                          className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-green-50 text-green-700 rounded-full"
                         >
                           <Building2 className="w-3 h-3" />
                           {m.organization.name}
                           {m.role === 'admin' && (
                             <span className="text-amber-600">(Admin)</span>
                           )}
+                        </span>
+                      ))}
+                      {/* Pending invitations */}
+                      {user.pendingInvitations?.map((inv) => (
+                        <span
+                          key={inv.id}
+                          className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-amber-50 text-amber-700 rounded-full"
+                        >
+                          <Clock className="w-3 h-3" />
+                          {inv.organization.name}
+                          <span>(Invited)</span>
                         </span>
                       ))}
                     </div>

@@ -21,9 +21,10 @@ import {
   MoreVertical,
   Pencil,
   CheckCircle,
+  Clock,
 } from 'lucide-react'
 import Link from 'next/link'
-import type { Organization, OrganizationSettings, OrganizationMember, User as UserType, LLMProvider } from '@/types'
+import type { Organization, OrganizationSettings, OrganizationMember, OrganizationInvitation, User as UserType, LLMProvider } from '@/types'
 
 interface Product {
   id: string
@@ -35,6 +36,7 @@ interface Product {
 interface OrgDetails extends Organization {
   settings?: OrganizationSettings
   members?: (OrganizationMember & { user: UserType })[]
+  pendingInvitations?: OrganizationInvitation[]
   products?: Product[]
   stats?: {
     products: number
@@ -399,6 +401,11 @@ export default function OrganizationDetailsPage() {
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-lg font-semibold text-slate-900">
               Members ({org.members?.length || 0})
+              {org.pendingInvitations && org.pendingInvitations.length > 0 && (
+                <span className="text-slate-500 font-normal ml-2">
+                  · {org.pendingInvitations.length} pending
+                </span>
+              )}
             </h2>
             <Button onClick={() => setShowInviteModal(true)}>
               <Plus className="w-4 h-4 mr-2" />
@@ -406,85 +413,123 @@ export default function OrganizationDetailsPage() {
             </Button>
           </div>
 
-          {org.members && org.members.length > 0 ? (
-            <Card>
-              <CardContent className="p-0">
-                <div className="divide-y divide-slate-200">
-                  {org.members.map((member) => (
-                    <div
-                      key={member.id}
-                      className="flex items-center justify-between p-4"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center">
-                          <User className="w-5 h-5 text-slate-500" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-slate-900">
-                            {member.user?.email}
-                          </p>
-                          <p className="text-sm text-slate-500">
-                            Joined {new Date(member.joined_at).toLocaleDateString()}
-                          </p>
-                        </div>
+          <Card>
+            <CardContent className="p-0">
+              <div className="divide-y divide-slate-200">
+                {/* Pending Invitations */}
+                {org.pendingInvitations && org.pendingInvitations.map((invitation) => (
+                  <div
+                    key={invitation.id}
+                    className="flex items-center justify-between p-4 bg-amber-50/50"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+                        <Clock className="w-5 h-5 text-amber-600" />
                       </div>
-
-                      <div className="flex items-center gap-3">
-                        <span
-                          className={`flex items-center gap-1 px-2 py-1 text-xs rounded-full ${
-                            member.role === 'admin'
-                              ? 'bg-amber-100 text-amber-700'
-                              : 'bg-slate-100 text-slate-600'
-                          }`}
-                        >
-                          {member.role === 'admin' && <Crown className="w-3 h-3" />}
-                          {member.role === 'admin' ? 'Admin' : 'User'}
-                        </span>
-
-                        <div className="relative">
-                          <button
-                            onClick={() => setMemberMenuId(memberMenuId === member.id ? null : member.id)}
-                            className="p-2 hover:bg-slate-100 rounded-lg"
-                          >
-                            <MoreVertical className="w-4 h-4 text-slate-500" />
-                          </button>
-
-                          {memberMenuId === member.id && (
-                            <div className="absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-10 min-w-[140px]">
-                              <button
-                                onClick={() => handleUpdateMemberRole(
-                                  member.id,
-                                  member.role === 'admin' ? 'user' : 'admin'
-                                )}
-                                className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 w-full text-left"
-                              >
-                                <Crown className="w-4 h-4" />
-                                {member.role === 'admin' ? 'Remove Admin' : 'Make Admin'}
-                              </button>
-                              <button
-                                onClick={() => handleRemoveMember(member.id)}
-                                className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                                Remove
-                              </button>
-                            </div>
-                          )}
-                        </div>
+                      <div>
+                        <p className="font-medium text-slate-900">
+                          {invitation.email}
+                        </p>
+                        <p className="text-sm text-amber-600">
+                          Invited {new Date(invitation.created_at).toLocaleDateString()}
+                        </p>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <Users className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                <p className="text-slate-500">No members yet</p>
-              </CardContent>
-            </Card>
-          )}
+
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`flex items-center gap-1 px-2 py-1 text-xs rounded-full ${
+                          invitation.role === 'admin'
+                            ? 'bg-amber-100 text-amber-700'
+                            : 'bg-slate-100 text-slate-600'
+                        }`}
+                      >
+                        {invitation.role === 'admin' && <Crown className="w-3 h-3" />}
+                        {invitation.role === 'admin' ? 'Admin' : 'User'}
+                      </span>
+                      <span className="px-2 py-1 text-xs rounded-full bg-amber-100 text-amber-700">
+                        Pending
+                      </span>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Active Members */}
+                {org.members && org.members.map((member) => (
+                  <div
+                    key={member.id}
+                    className="flex items-center justify-between p-4"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                        <User className="w-5 h-5 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-slate-900">
+                          {member.user?.email}
+                        </p>
+                        <p className="text-sm text-green-600">
+                          Joined {new Date(member.joined_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`flex items-center gap-1 px-2 py-1 text-xs rounded-full ${
+                          member.role === 'admin'
+                            ? 'bg-amber-100 text-amber-700'
+                            : 'bg-slate-100 text-slate-600'
+                        }`}
+                      >
+                        {member.role === 'admin' && <Crown className="w-3 h-3" />}
+                        {member.role === 'admin' ? 'Admin' : 'User'}
+                      </span>
+
+                      <div className="relative">
+                        <button
+                          onClick={() => setMemberMenuId(memberMenuId === member.id ? null : member.id)}
+                          className="p-2 hover:bg-slate-100 rounded-lg"
+                        >
+                          <MoreVertical className="w-4 h-4 text-slate-500" />
+                        </button>
+
+                        {memberMenuId === member.id && (
+                          <div className="absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-10 min-w-[140px]">
+                            <button
+                              onClick={() => handleUpdateMemberRole(
+                                member.id,
+                                member.role === 'admin' ? 'user' : 'admin'
+                              )}
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 w-full text-left"
+                            >
+                              <Crown className="w-4 h-4" />
+                              {member.role === 'admin' ? 'Remove Admin' : 'Make Admin'}
+                            </button>
+                            <button
+                              onClick={() => handleRemoveMember(member.id)}
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              Remove
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Empty state */}
+                {(!org.members || org.members.length === 0) && (!org.pendingInvitations || org.pendingInvitations.length === 0) && (
+                  <div className="text-center py-8">
+                    <Users className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                    <p className="text-slate-500">No members yet</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 

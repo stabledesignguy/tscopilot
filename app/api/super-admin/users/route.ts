@@ -42,9 +42,18 @@ export async function GET() {
           .eq('user_id', u.id)
           .eq('is_active', true)
 
+        // Get pending invitations for this user's email
+        const { data: pendingInvitations } = await (serviceClient
+          .from('organization_invitations') as any)
+          .select('*, organization:organizations(*)')
+          .eq('email', u.email)
+          .is('accepted_at', null)
+          .gt('expires_at', new Date().toISOString())
+
         return {
           ...u,
           memberships: memberships || [],
+          pendingInvitations: pendingInvitations || [],
         }
       })
     )

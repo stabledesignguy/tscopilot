@@ -68,6 +68,15 @@ export async function GET(
       user: (profiles || []).find((p: any) => p.id === member.user_id) || null,
     }))
 
+    // Get pending invitations
+    const { data: pendingInvitations } = await (serviceClient
+      .from('organization_invitations') as any)
+      .select('*')
+      .eq('organization_id', id)
+      .is('accepted_at', null)
+      .gt('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: false })
+
     // Get products for this organization
     const { data: products } = await (serviceClient
       .from('products') as any)
@@ -91,6 +100,7 @@ export async function GET(
       ...(org as object),
       settings,
       members: membersWithProfiles,
+      pendingInvitations: pendingInvitations || [],
       products: products || [],
       stats: {
         products: (products || []).length,
