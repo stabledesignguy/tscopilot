@@ -5,7 +5,6 @@ import { Bot, User } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { Message } from '@/types'
-import { useSourceContext } from './SourceContext'
 
 interface MessageListProps {
   messages: Message[]
@@ -14,7 +13,6 @@ interface MessageListProps {
 
 export function MessageList({ messages, isLoading }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
-  const { openPDFViewer, findSourceByUrl } = useSourceContext()
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -28,31 +26,19 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
     if (isPDF) {
       e.preventDefault()
 
-      // Extract filename from URL
-      const urlParts = baseUrl.split('/')
-      const filename = decodeURIComponent(urlParts[urlParts.length - 1] || 'document.pdf')
-
       // Extract page number from URL hash (e.g., #page=45)
       const hashMatch = href.match(/#page=(\d+)/)
-      const pageFromUrl = hashMatch ? parseInt(hashMatch[1], 10) : undefined
+      const pageFromUrl = hashMatch ? hashMatch[1] : null
 
-      // Find source metadata for this URL (for search text highlighting)
-      const source = findSourceByUrl(href)
+      // Build URL with page parameter for browser PDF viewer
+      // Most browsers support #page=N for PDF navigation
+      const pdfUrl = pageFromUrl ? `${baseUrl}#page=${pageFromUrl}` : baseUrl
 
-      // Build pageInfo, prioritizing the page from the URL
-      const pageInfo = pageFromUrl
-        ? {
-            pageNumbers: [pageFromUrl],
-            primaryPage: pageFromUrl,
-            searchText: source?.pageInfo?.searchText || ''
-          }
-        : source?.pageInfo
-
-      // Open in custom PDF viewer with highlight info
-      openPDFViewer(baseUrl, filename, pageInfo)
+      // Open PDF in new browser tab
+      window.open(pdfUrl, '_blank')
     }
     // Non-PDF links will open normally in new tab
-  }, [openPDFViewer, findSourceByUrl])
+  }, [])
 
   return (
     <div className="flex-1 overflow-y-auto px-4 py-6">
