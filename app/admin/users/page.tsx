@@ -14,8 +14,7 @@ import {
   User,
   Mail,
   Trash2,
-  Copy,
-  Check,
+  CheckCircle,
 } from 'lucide-react'
 import type { OrganizationMember, User as UserType, OrganizationInvitation } from '@/types'
 
@@ -25,12 +24,11 @@ export default function AdminUsersPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [showInviteModal, setShowInviteModal] = useState(false)
+  const [showInviteSuccessModal, setShowInviteSuccessModal] = useState(false)
   const [inviteForm, setInviteForm] = useState({ email: '', role: 'user' as 'user' | 'admin' })
   const [isInviting, setIsInviting] = useState(false)
   const [inviteError, setInviteError] = useState('')
-  const [inviteSuccess, setInviteSuccess] = useState<{ url: string } | null>(null)
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null)
-  const [copiedUrl, setCopiedUrl] = useState(false)
 
   // Get current org from localStorage
   const getCurrentOrgId = () => {
@@ -69,7 +67,6 @@ export default function AdminUsersPage() {
 
     setIsInviting(true)
     setInviteError('')
-    setInviteSuccess(null)
 
     try {
       const response = await fetch(`/api/org/${orgId}/members/invite`, {
@@ -81,15 +78,10 @@ export default function AdminUsersPage() {
       const data = await response.json()
 
       if (response.ok) {
-        if (data.existingUser) {
-          // User was added directly
-          setShowInviteModal(false)
-          setInviteForm({ email: '', role: 'user' })
-          fetchData()
-        } else {
-          // Invitation was created
-          setInviteSuccess({ url: data.invitationUrl })
-        }
+        setShowInviteModal(false)
+        setInviteForm({ email: '', role: 'user' })
+        setShowInviteSuccessModal(true)
+        fetchData()
       } else {
         setInviteError(data.error || 'Failed to send invitation')
       }
@@ -138,14 +130,6 @@ export default function AdminUsersPage() {
       console.error('Failed to update role:', error)
     }
     setMenuOpenId(null)
-  }
-
-  const copyInviteUrl = async () => {
-    if (inviteSuccess?.url) {
-      await navigator.clipboard.writeText(inviteSuccess.url)
-      setCopiedUrl(true)
-      setTimeout(() => setCopiedUrl(false), 2000)
-    }
   }
 
   const filteredMembers = members.filter((member) =>
@@ -271,105 +255,89 @@ export default function AdminUsersPage() {
           <Card className="w-full max-w-md mx-4">
             <CardHeader>
               <h2 className="text-lg font-semibold text-secondary-900">
-                {inviteSuccess ? 'Invitation Created' : 'Invite User'}
+                Invite User
               </h2>
             </CardHeader>
             <CardContent>
-              {inviteSuccess ? (
-                <div className="space-y-4">
-                  <p className="text-secondary-600">
-                    Share this link with the user to invite them to join:
-                  </p>
-                  <div className="flex items-center gap-2 p-3 bg-secondary-50 rounded-lg">
-                    <input
-                      type="text"
-                      value={inviteSuccess.url}
-                      readOnly
-                      className="flex-1 bg-transparent text-sm text-secondary-700 outline-none"
-                    />
-                    <button
-                      onClick={copyInviteUrl}
-                      className="p-2 hover:bg-secondary-100 rounded transition-colors"
-                    >
-                      {copiedUrl ? (
-                        <Check className="w-4 h-4 text-green-600" />
-                      ) : (
-                        <Copy className="w-4 h-4 text-secondary-500" />
-                      )}
-                    </button>
-                  </div>
+              <form onSubmit={handleInvite} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 mb-1">
+                    Email Address
+                  </label>
+                  <Input
+                    type="email"
+                    value={inviteForm.email}
+                    onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
+                    placeholder="user@example.com"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 mb-1">
+                    Role
+                  </label>
+                  <select
+                    value={inviteForm.role}
+                    onChange={(e) => setInviteForm({ ...inviteForm, role: e.target.value as 'user' | 'admin' })}
+                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  >
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+
+                {inviteError && (
+                  <p className="text-sm text-red-600">{inviteError}</p>
+                )}
+
+                <div className="flex justify-end gap-3 pt-4">
                   <Button
-                    className="w-full"
+                    type="button"
+                    variant="outline"
                     onClick={() => {
                       setShowInviteModal(false)
                       setInviteForm({ email: '', role: 'user' })
-                      setInviteSuccess(null)
+                      setInviteError('')
                     }}
                   >
-                    Done
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isInviting}>
+                    {isInviting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="w-4 h-4 mr-2" />
+                        Send Invitation
+                      </>
+                    )}
                   </Button>
                 </div>
-              ) : (
-                <form onSubmit={handleInvite} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-secondary-700 mb-1">
-                      Email Address
-                    </label>
-                    <Input
-                      type="email"
-                      value={inviteForm.email}
-                      onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
-                      placeholder="user@example.com"
-                      required
-                    />
-                  </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
-                  <div>
-                    <label className="block text-sm font-medium text-secondary-700 mb-1">
-                      Role
-                    </label>
-                    <select
-                      value={inviteForm.role}
-                      onChange={(e) => setInviteForm({ ...inviteForm, role: e.target.value as 'user' | 'admin' })}
-                      className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                    >
-                      <option value="user">User</option>
-                      <option value="admin">Admin</option>
-                    </select>
-                  </div>
-
-                  {inviteError && (
-                    <p className="text-sm text-red-600">{inviteError}</p>
-                  )}
-
-                  <div className="flex justify-end gap-3 pt-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setShowInviteModal(false)
-                        setInviteForm({ email: '', role: 'user' })
-                        setInviteError('')
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button type="submit" disabled={isInviting}>
-                      {isInviting ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Sending...
-                        </>
-                      ) : (
-                        <>
-                          <Mail className="w-4 h-4 mr-2" />
-                          Send Invitation
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </form>
-              )}
+      {/* Invite Success Modal */}
+      {showInviteSuccessModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-sm mx-4">
+            <CardContent className="pt-6 pb-6 text-center">
+              <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-secondary-900 mb-2">
+                Member Invited!
+              </h2>
+              <p className="text-secondary-600 mb-6">
+                An invitation email has been sent.
+              </p>
+              <Button onClick={() => setShowInviteSuccessModal(false)}>
+                OK
+              </Button>
             </CardContent>
           </Card>
         </div>

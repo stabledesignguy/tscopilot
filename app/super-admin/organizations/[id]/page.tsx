@@ -20,6 +20,7 @@ import {
   User,
   MoreVertical,
   Pencil,
+  CheckCircle,
 } from 'lucide-react'
 import Link from 'next/link'
 import type { Organization, OrganizationSettings, OrganizationMember, User as UserType, LLMProvider } from '@/types'
@@ -50,6 +51,7 @@ export default function OrganizationDetailsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'overview' | 'members' | 'settings'>('overview')
   const [showInviteModal, setShowInviteModal] = useState(false)
+  const [showInviteSuccessModal, setShowInviteSuccessModal] = useState(false)
   const [inviteForm, setInviteForm] = useState({ email: '', role: 'user' as 'user' | 'admin' })
   const [isInviting, setIsInviting] = useState(false)
   const [inviteError, setInviteError] = useState('')
@@ -104,6 +106,7 @@ export default function OrganizationDetailsPage() {
       if (response.ok) {
         setShowInviteModal(false)
         setInviteForm({ email: '', role: 'user' })
+        setShowInviteSuccessModal(true)
         fetchOrg()
       } else {
         const data = await response.json()
@@ -661,6 +664,26 @@ export default function OrganizationDetailsPage() {
                   </Button>
                 </div>
               </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Invite Success Modal */}
+      {showInviteSuccessModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-sm mx-4">
+            <CardContent className="pt-6 pb-6 text-center">
+              <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-slate-900 mb-2">
+                Member Invited!
+              </h2>
+              <p className="text-slate-600 mb-6">
+                An invitation email has been sent.
+              </p>
+              <Button onClick={() => setShowInviteSuccessModal(false)}>
+                OK
+              </Button>
             </CardContent>
           </Card>
         </div>
