@@ -64,8 +64,6 @@ export async function sendInvitationEmail({
   const text = `
 You've been invited to join ${organizationName} as a ${role}.
 
-${inviterEmail ? `Invited by: ${inviterEmail}` : ''}
-
 Click the link below to accept the invitation:
 ${invitationUrl}
 
@@ -73,6 +71,8 @@ This invitation expires on ${expiresAt.toLocaleDateString()}.
 
 If you didn't expect this invitation, you can safely ignore this email.
 `.trim()
+
+  const logoUrl = 'https://tscopilot.vercel.app/logo-email.png'
 
   const html = `
 <!DOCTYPE html>
@@ -82,8 +82,9 @@ If you didn't expect this invitation, you can safely ignore this email.
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
-    <h1 style="color: white; margin: 0; font-size: 24px;">You're Invited!</h1>
+  <div style="background: linear-gradient(135deg, #EE955B 0%, #ffffff 100%); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+    <img src="${logoUrl}" alt="TScopilot" style="height: 40px; margin-bottom: 15px;">
+    <h1 style="color: #333; margin: 0; font-size: 24px;">You're Invited!</h1>
   </div>
 
   <div style="background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px;">
@@ -91,10 +92,8 @@ If you didn't expect this invitation, you can safely ignore this email.
       You've been invited to join <strong>${organizationName}</strong> as a <strong>${role}</strong>.
     </p>
 
-    ${inviterEmail ? `<p style="color: #6b7280; font-size: 14px;">Invited by: ${inviterEmail}</p>` : ''}
-
     <div style="text-align: center; margin: 30px 0;">
-      <a href="${invitationUrl}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+      <a href="${invitationUrl}" style="display: inline-block; background: linear-gradient(135deg, #EE955B 0%, #f4a574 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
         Accept Invitation
       </a>
     </div>
@@ -111,7 +110,7 @@ If you didn't expect this invitation, you can safely ignore this email.
 
     <p style="color: #9ca3af; font-size: 12px; text-align: center; margin-top: 10px;">
       If the button doesn't work, copy and paste this link:<br>
-      <a href="${invitationUrl}" style="color: #667eea; word-break: break-all;">${invitationUrl}</a>
+      <a href="${invitationUrl}" style="color: #EE955B; word-break: break-all;">${invitationUrl}</a>
     </p>
   </div>
 </body>
